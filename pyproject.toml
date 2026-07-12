@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Quality Assurance",
     "Typing :: Typed",
 ]
@@ -48,6 +49,7 @@ module-name = "actually"
 
 [dependency-groups]
 dev = [
+    "commitizen>=4.16.4",
     "pytest>=9.1.1",
     "ruff>=0.15.21",
     "ty>=0.0.59",
@@ -59,3 +61,8 @@ markers = [
     "unit: pure logic in isolation, no real machinery",
     "integration: real local machinery such as the filesystem",
 ]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_provider = "pep621"
