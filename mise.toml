@@ -1,0 +1,17 @@
+[settings]
+lockfile = true
+
+[tools]
+gh = "latest"
+uv = "latest"
+
+[tasks.release]
+description = "bump version via commitizen and push the release tag"
+run = [
+    "uv run cz bump",
+    "git push --follow-tags",
+]
+
+[tasks.rerun-pipeline]
+description = "re-run the failed jobs of the most recent failed workflow run"
+run = "gh run list --limit 1 --status failure --json databaseId --jq '.[0].databaseId' | xargs gh run rerun --failed"
