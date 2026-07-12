@@ -63,6 +63,7 @@ markers = [
 ]
 
 [tool.commitizen]
+annotated_tag = true
 name = "cz_conventional_commits"
 tag_format = "v$version"
 version_provider = "pep621"
