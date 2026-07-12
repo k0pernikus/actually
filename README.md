@@ -14,15 +14,18 @@ Well, *actually*, your code should read like this.
 ## Usage
 
 ```bash
-uvx well-actually check src/
-uvx well-actually format src/
+uvx well-actually@latest check .
+uvx well-actually@latest format .
 ```
+
+The `@latest` matters: a bare `uvx well-actually` reuses a cached tool environment and can
+silently run an outdated version; `@latest` re-resolves against the index every time.
 
 Installed (`uv tool install well-actually`), the short command is available too:
 
 ```bash
-actually check src/
-actually format src/
+actually check .
+actually format .
 ```
 
 `check` reports violations and exits non-zero when it finds any. Both commands lint `.py`
