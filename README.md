@@ -14,8 +14,15 @@ Well, *actually*, your code should read like this.
 ## Usage
 
 ```bash
-uvx actually check src/
-uvx actually format src/
+uvx well-actually check src/
+uvx well-actually format src/
+```
+
+Installed (`uv tool install well-actually`), the short command is available too:
+
+```bash
+actually check src/
+actually format src/
 ```
 
 `check` reports violations and exits non-zero when it finds any.

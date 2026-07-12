@@ -1,5 +1,5 @@
 [project]
-name = "actually"
+name = "well-actually"
 version = "0.1.0"
 description = "Well, actually — an opinionated Python linter and formatter: bans else and elif, allows only flat ternaries, and enforces blank lines around return"
 readme = "README.md"
@@ -33,6 +33,7 @@ dependencies = [
 
 [project.scripts]
 actually = "actually.cli:main"
+well-actually = "actually.cli:main"
 
 [project.urls]
 Repository = "https://github.com/k0pernikus/actually"
@@ -40,6 +41,9 @@ Repository = "https://github.com/k0pernikus/actually"
 [build-system]
 requires = ["uv_build>=0.11.28,<0.12.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "actually"
 
 [dependency-groups]
 dev = [

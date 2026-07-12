@@ -9,7 +9,7 @@ from actually.formatting import format_source
 @click.group(
     help="Well, actually — an opinionated Python linter: no else, no elif, flat ternaries only, breathing room around return."
 )
-@click.version_option(package_name="actually")
+@click.version_option(package_name="well-actually")
 def main() -> None:
     pass
 
