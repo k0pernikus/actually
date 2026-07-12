@@ -45,7 +45,7 @@ def _report_files(paths: tuple[Path, ...], apply_fixes: bool) -> int:
 
 def _process_file(file: Path, apply_fixes: bool) -> int:
     source = file.read_text(encoding="utf-8")
-    checked = format_source(source) if apply_fixes else source
+    checked = _formatted(file, source) if apply_fixes else source
     if checked != source:
         file.write_text(checked, encoding="utf-8")
         click.secho(f"fixed: {file}", fg="green")
@@ -55,3 +55,10 @@ def _process_file(file: Path, apply_fixes: bool) -> int:
         click.echo(f"{file}:{violation.line} [{violation.rule}] {violation.message}")
 
     return len(violations)
+
+
+def _formatted(file: Path, source: str) -> str:
+    try:
+        return format_source(source)
+    except RuntimeError as error:
+        raise RuntimeError(f"{file}: {error}") from error

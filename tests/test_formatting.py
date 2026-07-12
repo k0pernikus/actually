@@ -117,6 +117,32 @@ def test_dedent_preserves_string_lines_flatter_than_the_shift() -> None:
     )
 
 
+def test_trailing_comment_on_return_line_converges() -> None:
+    source = "def f():\n    return 1  # noqa: TID251\n"
+
+    assert format_source(source) == source
+
+
+def test_blank_below_lands_past_a_same_line_comment() -> None:
+    source = "def f(x):\n    if x:\n        return 1  # note\n    y = 2\n"
+
+    assert format_source(source) == (
+        "def f(x):\n    if x:\n        return 1  # note\n\n    y = 2\n"
+    )
+
+
+def test_same_line_preceding_statement_converges() -> None:
+    source = "def f():\n    y = 1; return y\n"
+
+    assert format_source(source) == source
+
+
+def test_blank_above_skips_same_line_sibling() -> None:
+    source = "def f():\n    x = 1\n    y = 2; return y\n"
+
+    assert format_source(source) == ("def f():\n    x = 1\n\n    y = 2; return y\n")
+
+
 def test_format_is_idempotent() -> None:
     source = (
         "def f(foo, bar, baz):\n"

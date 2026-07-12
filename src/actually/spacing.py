@@ -40,7 +40,7 @@ def return_spacing_gaps(source: str) -> tuple[ReturnSpacingGap, ...]:
 
 
 def _gap_above(statement: SgNode) -> tuple[ReturnSpacingGap, ...]:
-    preceding = statement.prev()
+    preceding = _preceding_code_on_an_earlier_line(statement)
     if preceding is None:
         return ()
 
@@ -72,10 +72,25 @@ def _gap(statement: SgNode, side: Literal["above", "below"]) -> ReturnSpacingGap
     )
 
 
+def _preceding_code_on_an_earlier_line(statement: SgNode) -> SgNode | None:
+    current = statement.prev()
+    while (
+        current is not None and current.range().end.line == statement.range().start.line
+    ):
+        current = current.prev()
+
+    return current
+
+
 def _following_code(statement: SgNode) -> SgNode | None:
+    end_line = statement.range().end.line
     current = statement
     while True:
         sibling = current.next()
+        if sibling is not None and sibling.range().start.line == end_line:
+            current = sibling
+            continue
+
         if sibling is not None:
             return sibling
 

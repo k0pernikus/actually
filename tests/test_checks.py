@@ -101,6 +101,10 @@ def test_return_ending_a_function_needs_no_blank_below() -> None:
     assert outline(source) == []
 
 
+def test_trailing_comment_on_return_line_is_clean() -> None:
+    assert outline("def f():\n    return 1  # noqa\n") == []
+
+
 def test_return_directly_before_except_clause_is_exempt() -> None:
     source = (
         "def f():\n    try:\n        return 1\n    except ValueError:\n        raise\n"
