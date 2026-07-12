@@ -51,3 +51,10 @@ dev = [
     "ruff>=0.15.21",
     "ty>=0.0.59",
 ]
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers"
+markers = [
+    "unit: pure logic in isolation, no real machinery",
+    "integration: real local machinery such as the filesystem",
+]

@@ -1,4 +1,8 @@
+import pytest
+
 from actually.formatting import format_source
+
+pytestmark = pytest.mark.unit
 
 
 def test_inserts_blank_line_below_return() -> None:

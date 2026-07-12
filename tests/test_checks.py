@@ -1,4 +1,8 @@
+import pytest
+
 from actually.checks import find_violations
+
+pytestmark = pytest.mark.unit
 
 
 def outline(source: str) -> list[tuple[str, int]]:

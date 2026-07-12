@@ -25,7 +25,10 @@ actually check src/
 actually format src/
 ```
 
-`check` reports violations and exits non-zero when it finds any.
+`check` reports violations and exits non-zero when it finds any. Both commands lint `.py`
+files only; directory scans skip environment, cache, and VCS directories (`.venv`, `venv`,
+`.git`, `__pycache__`, `node_modules`, and friends) — a `.py` file passed explicitly is
+always linted.
 
 `format` rewrites files in place, then reports what it could not fix:
 

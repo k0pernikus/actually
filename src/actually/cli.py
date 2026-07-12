@@ -3,6 +3,7 @@ from pathlib import Path
 import rich_click as click
 
 from actually.checks import find_violations
+from actually.discovery import python_files
 from actually.formatting import format_source
 
 
@@ -39,7 +40,7 @@ def format_files(paths: tuple[Path, ...]) -> None:
 
 
 def _report_files(paths: tuple[Path, ...], apply_fixes: bool) -> int:
-    return sum(_process_file(file, apply_fixes) for file in _python_files(paths))
+    return sum(_process_file(file, apply_fixes) for file in python_files(paths))
 
 
 def _process_file(file: Path, apply_fixes: bool) -> int:
@@ -54,15 +55,3 @@ def _process_file(file: Path, apply_fixes: bool) -> int:
         click.echo(f"{file}:{violation.line} [{violation.rule}] {violation.message}")
 
     return len(violations)
-
-
-def _python_files(paths: tuple[Path, ...]) -> tuple[Path, ...]:
-    collected: list[Path] = []
-    for path in paths:
-        if path.is_dir():
-            collected.extend(sorted(path.rglob("*.py")))
-            continue
-
-        collected.append(path)
-
-    return tuple(dict.fromkeys(collected))
