@@ -1,7 +1,15 @@
 from ast_grep_py import SgNode, SgRoot
 
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
-from actually.violations import Violation
+from actually.violations import (
+    BLANK_AFTER_RETURN,
+    BLANK_BEFORE_RETURN,
+    NO_ELIF,
+    NO_ELSE,
+    TERNARY_NOT_EMPTY,
+    TERNARY_NOT_NESTED,
+    Violation,
+)
 
 ELSE_CONSTRUCT_BY_PARENT_KIND = {
     "for_statement": "for",
@@ -10,6 +18,14 @@ ELSE_CONSTRUCT_BY_PARENT_KIND = {
     "while_statement": "while",
 }
 
+EMPTY_CONTAINER_KINDS = frozenset(
+    {
+        "dictionary",
+        "list",
+        "tuple",
+    },
+)
+
 
 def find_violations(source: str) -> tuple[Violation, ...]:
     root = SgRoot(source, "python").root()
@@ -17,16 +33,19 @@ def find_violations(source: str) -> tuple[Violation, ...]:
         *_else_violations(root),
         *_elif_violations(root),
         *_nested_ternary_violations(root),
+        *_degenerate_ternary_violations(root),
         *_return_spacing_violations(source),
     )
 
-    return tuple(sorted(found, key=lambda violation: violation.line))
+    return tuple(
+        sorted(found, key=lambda violation: (violation.line, violation.rule.code))
+    )
 
 
 def _else_violations(root: SgNode) -> tuple[Violation, ...]:
     return tuple(
         Violation(
-            rule="no-else",
+            rule=NO_ELSE,
             line=_report_line(clause),
             message=f"banned `else` clause on `{ELSE_CONSTRUCT_BY_PARENT_KIND[_parent_of(clause).kind()]}` — restructure to guard clauses",
         )
@@ -37,7 +56,7 @@ def _else_violations(root: SgNode) -> tuple[Violation, ...]:
 def _elif_violations(root: SgNode) -> tuple[Violation, ...]:
     return tuple(
         Violation(
-            rule="no-elif",
+            rule=NO_ELIF,
             line=_report_line(clause),
             message="banned `elif` — use guard clauses or a dispatch table",
         )
@@ -48,12 +67,24 @@ def _elif_violations(root: SgNode) -> tuple[Violation, ...]:
 def _nested_ternary_violations(root: SgNode) -> tuple[Violation, ...]:
     return tuple(
         Violation(
-            rule="no-nested-ternary",
+            rule=TERNARY_NOT_NESTED,
             line=_report_line(ternary),
             message="nested ternary — only flat conditional expressions are allowed",
         )
         for ternary in root.find_all(kind="conditional_expression")
         if _has_ternary_ancestor(ternary)
+    )
+
+
+def _degenerate_ternary_violations(root: SgNode) -> tuple[Violation, ...]:
+    return tuple(
+        Violation(
+            rule=TERNARY_NOT_EMPTY,
+            line=_report_line(ternary),
+            message="degenerate ternary arm — a placeholder `None`/empty arm is a hidden `else`",
+        )
+        for ternary in root.find_all(kind="conditional_expression")
+        if _has_degenerate_arm(ternary)
     )
 
 
@@ -64,13 +95,13 @@ def _return_spacing_violations(source: str) -> tuple[Violation, ...]:
 def _spacing_violation(gap: ReturnSpacingGap) -> Violation:
     if gap.side == "above":
         return Violation(
-            rule="blank-before-return",
+            rule=BLANK_BEFORE_RETURN,
             line=gap.return_start_line + 1,
             message="blank line required above `return` following other statements",
         )
 
     return Violation(
-        rule="blank-after-return",
+        rule=BLANK_AFTER_RETURN,
         line=gap.return_start_line + 1,
         message="blank line required below `return` when code follows",
     )
@@ -83,6 +114,37 @@ def _has_ternary_ancestor(node: SgNode) -> bool:
             return True
 
         ancestor = ancestor.parent()
+
+    return False
+
+
+def _has_degenerate_arm(ternary: SgNode) -> bool:
+    consequence, alternative = _ternary_arms(ternary)
+
+    return _is_degenerate_arm(consequence) or _is_degenerate_arm(alternative)
+
+
+def _ternary_arms(ternary: SgNode) -> tuple[SgNode, SgNode]:
+    operands = [
+        child for child in ternary.children() if child.kind() not in ("if", "else")
+    ]
+    if len(operands) != 3:
+        raise ValueError(
+            f"expected three operands in a conditional_expression, found {len(operands)}"
+        )
+
+    return (operands[0], operands[2])
+
+
+def _is_degenerate_arm(arm: SgNode) -> bool:
+    if arm.kind() == "none":
+        return True
+
+    if arm.kind() == "string":
+        return not any(child.kind() == "string_content" for child in arm.children())
+
+    if arm.kind() in EMPTY_CONTAINER_KINDS:
+        return not any(child.is_named() for child in arm.children())
 
     return False
 

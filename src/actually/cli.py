@@ -52,7 +52,9 @@ def _process_file(file: Path, apply_fixes: bool) -> int:
 
     violations = find_violations(checked)
     for violation in violations:
-        click.echo(f"{file}:{violation.line} [{violation.rule}] {violation.message}")
+        click.echo(
+            f"{file}:{violation.line} {violation.rule.code} [{violation.rule.name}] {violation.message}"
+        )
 
     return len(violations)
 

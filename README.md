@@ -3,13 +3,18 @@
 Well, *actually*, your code should read like this.
 
 `actually` is a highly opinionated Python linter and formatter built on
-[ast-grep](https://ast-grep.github.io/). It enforces a guard-clause style:
+[ast-grep](https://ast-grep.github.io/). It enforces a guard-clause style through rules with
+ruff-style stable codes, grouped by language construct
+([ADR 1](docs/decisions/1_ruff_style_rule_codes_in_named_groups.md)):
 
-- `else` is banned — on `if`, and as the completion clause on `for`, `while`, and `try` alike
-- `elif` is banned
-- ternaries are allowed only flat — nested conditional expressions are banned
-- `return` needs a blank line above it when it follows other statements in its block
-- `return` needs a blank line below it when more code follows
+| Code | Rule | What it bans |
+|:---|:---|:---|
+| ACTC001 | no-else | `else` on `if`, and the completion clauses on `for`, `while`, `try` |
+| ACTC002 | no-elif | `elif` — use guard clauses or a dispatch table |
+| ACTC003 | ternary-not-nested | a ternary inside another ternary's arm (`elif` in expression form) |
+| ACTC004 | ternary-not-empty | a degenerate ternary arm (`None`, `""`, empty container) — conditional inclusion in disguise |
+| ACTR001 | blank-before-return | a `return` stacked directly under other statements in its block |
+| ACTR002 | blank-after-return | code directly under a `return` line |
 
 ## Usage
 
