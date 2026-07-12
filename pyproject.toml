@@ -4,34 +4,24 @@ version = "0.2.3"
 description = "Well, actually — an opinionated Python linter and formatter: bans else and elif, allows only flat ternaries, and enforces blank lines around return"
 readme = "README.md"
 authors = [
-    { name = "Philipp Kretzschmar", email = "philipp.kretzschmar@gmail.com" },
+  { name = "Philipp Kretzschmar", email = "philipp.kretzschmar@gmail.com" },
 ]
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
-keywords = [
-    "ast-grep",
-    "formatter",
-    "guard-clauses",
-    "linter",
-    "opinionated",
-]
+keywords = ["ast-grep", "formatter", "guard-clauses", "linter", "opinionated"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Topic :: Software Development :: Quality Assurance",
-    "Typing :: Typed",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Quality Assurance",
+  "Typing :: Typed",
 ]
-dependencies = [
-    "ast-grep-py>=0.44.1",
-    "pathspec>=1.1.1",
-    "rich-click>=1.9.8",
-]
+dependencies = ["ast-grep-py>=0.44.1", "pathspec>=1.1.1", "rich-click>=1.9.8"]
 
 [project.scripts]
 actually = "actually.cli:main"
@@ -49,17 +39,18 @@ module-name = "actually"
 
 [dependency-groups]
 dev = [
-    "commitizen>=4.16.4",
-    "pytest>=9.1.1",
-    "ruff>=0.15.21",
-    "ty>=0.0.59",
+  "commitizen>=4.16.4",
+  "pytest>=9.1.1",
+  "ruff>=0.15.21",
+  "taplo>=0.9.3",
+  "ty>=0.0.59",
 ]
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
 markers = [
-    "unit: pure logic in isolation, no real machinery",
-    "integration: real local machinery such as the filesystem",
+  "unit: pure logic in isolation, no real machinery",
+  "integration: real local machinery such as the filesystem",
 ]
 
 [tool.commitizen]

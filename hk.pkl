@@ -25,7 +25,12 @@ hooks {
         depends = List("python-format")
         check = "uv run actually check {{files}}"
       }
+      ["toml-format"] {
+        glob = "**/*.toml"
+        fix = "uv run taplo format {{files}}"
+      }
       ["regenerate-docs"] {
+        depends = List("toml-format")
         glob =
           List(
             "README.md",

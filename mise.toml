@@ -8,10 +8,7 @@ uv = "latest"
 
 [tasks.release]
 description = "bump version via commitizen and push the release tag"
-run = [
-    "uv run cz bump",
-    "git push --follow-tags",
-]
+run = ["uv run cz bump", "git push --follow-tags"]
 
 [tasks.rerun-pipeline]
 description = "re-run the failed jobs of the most recent failed workflow run"

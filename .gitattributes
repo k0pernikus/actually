@@ -1,2 +1,19 @@
-README.md linguist-generated=true
-rules/*.md linguist-generated=true
+README.md linguist-generated
+rules/*.md linguist-generated
+uv.lock linguist-generated
+mise.lock linguist-generated
+
+* text=auto eol=lf
+*.py    text eol=lf
+*.toml  text eol=lf
+*.yml   text eol=lf
+*.pkl   text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+uv.lock         text eol=lf
+mise.lock       text eol=lf
+.python-version text eol=lf
+.gitignore      text eol=lf
+.gitattributes  text eol=lf
+.editorconfig   text eol=lf
+.env* text eol=lf
