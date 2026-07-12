@@ -1,6 +1,6 @@
 [project]
 name = "well-actually"
-version = "0.2.1"
+version = "0.2.2"
 description = "Well, actually — an opinionated Python linter and formatter: bans else and elif, allows only flat ternaries, and enforces blank lines around return"
 readme = "README.md"
 authors = [
