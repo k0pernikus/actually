@@ -4,6 +4,10 @@
 version = "2.96.0"
 backend = "aqua:cli/cli"
 
+[[tools.hk]]
+version = "1.50.0"
+backend = "aqua:jdx/hk"
+
 [[tools.uv]]
 version = "0.11.28"
 backend = "aqua:astral-sh/uv"

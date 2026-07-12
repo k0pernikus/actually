@@ -3,6 +3,7 @@ lockfile = true
 
 [tools]
 gh = "latest"
+hk = "latest"
 uv = "latest"
 
 [tasks.release]

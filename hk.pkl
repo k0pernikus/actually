@@ -1,0 +1,52 @@
+amends "package://github.com/jdx/hk/releases/download/v1.50.0/hk@1.50.0#/Config.pkl"
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    stage = true
+    steps {
+      ["python-format"] {
+        glob = "**/*.py"
+        fix = "uv run ruff format {{files}}"
+      }
+      ["python-lint"] {
+        glob = "**/*.py"
+        depends = List("python-format")
+        check = "uv run ruff check {{files}}"
+      }
+      ["python-typecheck"] {
+        glob = "**/*.py"
+        depends = List("python-lint")
+        check = "uv run ty check src tests scripts"
+      }
+      ["actually-self-check"] {
+        glob = "**/*.py"
+        depends = List("python-format")
+        check = "uv run actually check {{files}}"
+      }
+      ["regenerate-docs"] {
+        glob =
+          List(
+            "README.md",
+            "README.template.md",
+            "rules.toml",
+            "rules/**/*.md",
+            "scripts/generate_docs.py",
+          )
+        fix = "uv run python scripts/generate_docs.py"
+        stage = List("README.md", "rules")
+      }
+    }
+  }
+  ["pre-push"] {
+    steps {
+      ["docs-in-sync"] {
+        check = "uv run python scripts/generate_docs.py --check"
+      }
+      ["uv-lock-in-sync"] {
+        check = "uv lock --check"
+      }
+    }
+  }
+}

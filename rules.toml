@@ -1,0 +1,161 @@
+[[rules]]
+code = "ACTC001"
+name = "no-else"
+group = "actually-conditionals"
+status = "stable"
+fix = "partial"
+summary = "`else` on `if`, and the completion clauses on `for`, `while`, `try`"
+rationale = '''
+An `else` clause hides the happy path one indent deeper and forces the reader to hold both
+branches open. The completion clauses on `for`, `while`, and `try` are worse: they overload
+`else` to mean "ran without `break`" or "raised no exception", putting the normal flow in the
+branch that reads as exceptional everywhere else in the language. Invert the condition into a
+guard clause and return early; dedent the continuation after `except`. `format` rewrites the
+`try`/`except`/`else` case automatically when every `except` body already exits — the other
+forms are reported for human refactoring.
+'''
+banned = '''
+def describe(config):
+    if config is None:
+        return "missing"
+    else:
+        return str(config)
+'''
+wanted = '''
+def describe(config):
+    if config is None:
+        return "missing"
+
+    return str(config)
+'''
+
+[[rules]]
+code = "ACTC002"
+name = "no-elif"
+group = "actually-conditionals"
+status = "stable"
+summary = "`elif` — use guard clauses or a dispatch table"
+rationale = '''
+An `elif` chain is N-way dispatch written as control flow: the reader walks every arm in order
+to learn which one matters. Dispatch is data, not code — a lookup table, a `match` statement,
+or a strategy map. A new case becomes a new entry, never a new `elif`.
+'''
+banned = '''
+def label(code):
+    if code == 200:
+        return "ok"
+    elif code == 404:
+        return "missing"
+'''
+wanted = '''
+def label(code):
+    labels = {
+        200: "ok",
+        404: "missing",
+    }
+
+    return labels.get(code, "unknown")
+'''
+
+[[rules]]
+code = "ACTC003"
+name = "ternary-not-nested"
+group = "actually-conditionals"
+status = "stable"
+summary = "a ternary inside another ternary's arm (`elif` in expression form)"
+rationale = '''
+A ternary is the one permitted conditional expression, and only flat: a ternary nested inside
+either arm is an `elif` chain in expression form, with reading order collapsing at exactly the
+point where clarity matters most. Refactor to guard clauses.
+'''
+banned = '''
+action = "beach" if sunny else "sleep" if night else "home"
+'''
+wanted = '''
+def action(sunny, night):
+    if sunny:
+        return "beach"
+
+    if night:
+        return "sleep"
+
+    return "home"
+'''
+
+[[rules]]
+code = "ACTC004"
+name = "ternary-not-empty"
+group = "actually-conditionals"
+status = "unstable"
+summary = "a degenerate ternary arm (`None`, `\"\"`, empty container) — conditional inclusion in disguise"
+rationale = '''
+An arm that exists only for conditional inclusion — `None`, an empty string, an empty container
+literal — is a hidden `else` smuggling an absent case into the binding: the result is a
+`T | None` (or an empty sentinel) every consumer must branch on again. Resolve the absence
+before the binding exists — raise on absent input, branch at the boundary, or accumulate with
+guarded appends when optional parts multiply.
+'''
+banned = '''
+parsed = None if raw is None else parse(raw)
+'''
+wanted = '''
+def parsed(raw):
+    if raw is None:
+        raise ValueError("raw input is required")
+
+    return parse(raw)
+'''
+
+[[rules]]
+code = "ACTR001"
+name = "blank-before-return"
+group = "actually-returns"
+status = "stable"
+fix = "full"
+summary = "a `return` stacked directly under other statements in its block"
+rationale = '''
+A `return` that follows other statements in its block is the exit point of the function —
+stacked flush against the work above it, it reads as just another line. One blank line above
+marks the handoff from computing the value to leaving with it.
+'''
+banned = '''
+def f(baz):
+    if baz:
+        foo = 42 + 1337
+        return foo
+'''
+wanted = '''
+def f(baz):
+    if baz:
+        foo = 42 + 1337
+
+        return foo
+'''
+
+[[rules]]
+code = "ACTR002"
+name = "blank-after-return"
+group = "actually-returns"
+status = "stable"
+fix = "full"
+summary = "code directly under a `return` line"
+rationale = '''
+Code on the line directly under a `return` — typically after the enclosing block dedents —
+reads as if it belonged to the same thought. One blank line after the `return` marks that a
+flow ended there and something new begins.
+'''
+banned = '''
+def f(foo, bar, baz):
+    if foo:
+        return foo
+    if bar:
+        return baz
+'''
+wanted = '''
+def f(foo, bar, baz):
+    if foo:
+        return foo
+
+    if bar:
+        return baz
+'''
