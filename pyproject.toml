@@ -1,0 +1,49 @@
+[project]
+name = "actually"
+version = "0.1.0"
+description = "Well, actually — an opinionated Python linter and formatter: bans else and elif, allows only flat ternaries, and enforces blank lines around return"
+readme = "README.md"
+authors = [
+    { name = "Philipp Kretzschmar", email = "philipp.kretzschmar@gmail.com" },
+]
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = [
+    "ast-grep",
+    "formatter",
+    "guard-clauses",
+    "linter",
+    "opinionated",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
+dependencies = [
+    "ast-grep-py>=0.44.1",
+    "rich-click>=1.9.8",
+]
+
+[project.scripts]
+actually = "actually.cli:main"
+
+[project.urls]
+Repository = "https://github.com/k0pernikus/actually"
+
+[build-system]
+requires = ["uv_build>=0.11.28,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.15.21",
+    "ty>=0.0.59",
+]
