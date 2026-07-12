@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from actually.gitignore import ignored_by_gitignore
+
 EXCLUDED_DIRECTORY_NAMES = frozenset(
     {
         ".eggs",
@@ -25,11 +27,14 @@ def python_files(paths: tuple[Path, ...]) -> tuple[Path, ...]:
 
 def _candidates(path: Path) -> tuple[Path, ...]:
     if path.is_dir():
-        return tuple(
+        scanned = tuple(
             candidate
             for candidate in sorted(path.rglob("*.py"))
             if not _under_excluded_directory(candidate, path)
         )
+        ignored = ignored_by_gitignore(path, scanned)
+
+        return tuple(candidate for candidate in scanned if candidate not in ignored)
 
     if path.suffix == ".py":
         return (path,)

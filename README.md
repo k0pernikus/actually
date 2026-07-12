@@ -27,8 +27,12 @@ actually format src/
 
 `check` reports violations and exits non-zero when it finds any. Both commands lint `.py`
 files only; directory scans skip environment, cache, and VCS directories (`.venv`, `venv`,
-`.git`, `__pycache__`, `node_modules`, and friends) — a `.py` file passed explicitly is
-always linted.
+`.git`, `__pycache__`, `node_modules`, and friends) and respect `.gitignore` files — nested
+ones and negations included, matched via [pathspec](https://pypi.org/project/pathspec/)
+(black's approach), so no git installation is required. When a `.git` directory is found
+above the scanned path, `.gitignore` files up to that repo root apply as well. Global
+excludes (`core.excludesFile`, `.git/info/exclude`) are not consulted. A `.py` file passed
+explicitly is always linted.
 
 `format` rewrites files in place, then reports what it could not fix:
 
