@@ -1,5 +1,9 @@
 amends "package://github.com/jdx/hk/releases/download/v1.50.0/hk@1.50.0#/Config.pkl"
 
+env {
+  ["VIRTUAL_ENV"] = ".venv"
+}
+
 hooks {
   ["pre-commit"] {
     fix = true
