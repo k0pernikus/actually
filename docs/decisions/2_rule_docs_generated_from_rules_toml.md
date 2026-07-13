@@ -31,6 +31,10 @@
   trigger its own rule, a `wanted` snippet must be violation-free — doc rot fails the build
 - an hk pre-commit job regenerates and stages the outputs when any source changes; a pre-push
   check and an integration test (`--check`) gate freshness in CI
+- the generator leaves every output chmod `444` and toggles write access only while writing —
+  a hand edit hits a read-only file first; the mode is per-checkout state (git does not track
+  it), re-applied whenever the generator runs, and `--check` deliberately ignores it so a fresh
+  clone passes CI
 
 ## Consequences
 

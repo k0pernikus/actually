@@ -14,6 +14,8 @@ TEMPLATE_PATH = REPO_ROOT / "README.template.md"
 README_PATH = REPO_ROOT / "README.md"
 RULES_DIR = REPO_ROOT / "rules"
 PLACEHOLDER = "{{rules_table}}"
+READONLY_MODE = 0o444
+WRITABLE_MODE = 0o644
 
 ActiveStatus = Literal["stable", "unstable"]
 FixCapability = Literal["check-only", "full", "partial"]
@@ -379,13 +381,21 @@ def _stray_pages(pages: dict[Path, str]) -> tuple[Path, ...]:
 
 
 def _write_outputs(rendered_readme: str, pages: dict[Path, str]) -> None:
-    README_PATH.write_text(rendered_readme, encoding="utf-8")
+    _write_readonly(README_PATH, rendered_readme)
     RULES_DIR.mkdir(exist_ok=True)
     for path, content in sorted(pages.items()):
-        path.write_text(content, encoding="utf-8")
+        _write_readonly(path, content)
 
     for stray in _stray_pages(pages):
         stray.unlink()
+
+
+def _write_readonly(path: Path, content: str) -> None:
+    if path.is_file():
+        path.chmod(WRITABLE_MODE)
+
+    path.write_text(content, encoding="utf-8")
+    path.chmod(READONLY_MODE)
 
 
 if __name__ == "__main__":
