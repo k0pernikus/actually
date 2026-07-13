@@ -52,6 +52,8 @@ explicitly is always linted.
 - dedents a `try/except/else` completion clause into straight-line code when every `except`
   body already exits (`return`, `raise`, `continue`, `break`) — when one falls through, the
   rewrite would change behaviour, so it is reported for human refactoring instead
+- `--only-autofixable` makes it best effort: every available fix is applied, the remaining
+  violations are still reported, and the exit code stays 0
 
 ## Example
 

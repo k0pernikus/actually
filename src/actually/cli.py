@@ -31,11 +31,17 @@ def check(paths: tuple[Path, ...]) -> None:
     name="format",
     help="Insert missing blank lines around return, dedent safe try/except/else clauses, then report what remains; exit 1 when unfixable violations remain.",
 )
+@click.option(
+    "--only-autofixable",
+    "only_autofixable",
+    is_flag=True,
+    help="Best effort: apply every available fix, report the rest, and exit 0 even when unfixable violations remain.",
+)
 @click.argument(
     "paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path)
 )
-def format_files(paths: tuple[Path, ...]) -> None:
-    if _report_files(paths, apply_fixes=True):
+def format_files(paths: tuple[Path, ...], only_autofixable: bool) -> None:
+    if _report_files(paths, apply_fixes=True) and not only_autofixable:
         raise SystemExit(1)
 
 
