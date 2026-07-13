@@ -44,8 +44,10 @@ them first. Our recommended configurations are this repo's own [`ruff.toml`](ruf
 [`ty.toml`](ty.toml). `actually`'s opinionation starts where those stop, and it MANDATES
 compatibility of its own output: no `actually` rule demands, and no `actually format` fix
 produces, code those rule sets reject — after `actually format`, a `ruff format` under the
-recommended configuration is a no-op. This repo gates itself on both toolchains plus its own
-linter on every commit, which is the guarantee exercised live.
+recommended configuration is a no-op. `well-actually` never runs ruff or ty itself — it is
+its own tool with neither as a dependency; pair them in your own pipeline. This repo gates
+itself on both toolchains plus its own linter on every commit, which is the guarantee
+exercised live.
 
 ## Usage
 
