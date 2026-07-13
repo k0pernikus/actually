@@ -16,6 +16,7 @@ from actually.violations import (
     Violation,
 )
 
+
 ELSE_CONSTRUCT_BY_PARENT_KIND = {
     "for_statement": "for",
     "if_statement": "if",
@@ -28,6 +29,20 @@ EMPTY_CONTAINER_KINDS = frozenset(
         "dictionary",
         "list",
         "tuple",
+    },
+)
+
+TERNARY_KEYWORD_KINDS = frozenset(
+    {
+        "else",
+        "if",
+    },
+)
+
+STRING_DELIMITER_KINDS = frozenset(
+    {
+        "string_end",
+        "string_start",
     },
 )
 
@@ -156,13 +171,9 @@ def _has_degenerate_arm(ternary: SgNode) -> bool:
 
 
 def _ternary_arms(ternary: SgNode) -> tuple[SgNode, SgNode]:
-    operands = [
-        child for child in ternary.children() if child.kind() not in ("if", "else")
-    ]
+    operands = [child for child in ternary.children() if child.kind() not in TERNARY_KEYWORD_KINDS]
     if len(operands) != 3:
-        raise ValueError(
-            f"expected three operands in a conditional_expression, found {len(operands)}"
-        )
+        raise ValueError(f"expected three operands in a conditional_expression, found {len(operands)}")
 
     return (operands[0], operands[2])
 
@@ -172,9 +183,7 @@ def _is_degenerate_arm(arm: SgNode) -> bool:
         return True
 
     if arm.kind() == "string":
-        return all(
-            child.kind() in ("string_start", "string_end") for child in arm.children()
-        )
+        return all(child.kind() in STRING_DELIMITER_KINDS for child in arm.children())
 
     if arm.kind() in EMPTY_CONTAINER_KINDS:
         return not any(child.is_named() for child in arm.children())

@@ -36,6 +36,17 @@ prints the same catalog in the terminal, docs links included:
 | ACTR001 | [blank-before-return](rules/blank-before-return.md) | stable | yes | a `return` stacked directly under other statements in its block |
 | ACTR002 | [blank-after-return](rules/blank-after-return.md) | stable | yes | code directly under a `return` line |
 
+## Standing on Ruff and Ty
+
+`actually` deliberately covers only what [ruff](https://docs.astral.sh/ruff/) and
+[ty](https://github.com/astral-sh/ty) cannot express — they do most of the lifting; adopt
+them first. Our recommended configurations are this repo's own [`ruff.toml`](ruff.toml) and
+[`ty.toml`](ty.toml). `actually`'s opinionation starts where those stop, and it MANDATES
+compatibility of its own output: no `actually` rule demands, and no `actually format` fix
+produces, code those rule sets reject — after `actually format`, a `ruff format` under the
+recommended configuration is a no-op. This repo gates itself on both toolchains plus its own
+linter on every commit, which is the guarantee exercised live.
+
 ## Usage
 
 ```bash

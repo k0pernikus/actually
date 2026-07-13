@@ -3,13 +3,12 @@ import pytest
 from actually.metadata import load_rule_catalog, rule_docs_url
 from actually.violations import RULE_GROUP_BY_PREFIX, RULE_SELECTOR_BY_VALUE, RULES
 
+
 pytestmark = pytest.mark.unit
 
 
 def test_rule_docs_url_is_the_github_page() -> None:
-    assert rule_docs_url("no-else") == (
-        "https://github.com/k0pernikus/actually/blob/main/rules/no-else.md"
-    )
+    assert rule_docs_url("no-else") == ("https://github.com/k0pernikus/actually/blob/main/rules/no-else.md")
 
 
 @pytest.mark.integration

@@ -2,114 +2,43 @@ import pytest
 
 from actually.formatting import format_source
 
+
 pytestmark = pytest.mark.unit
 
 
 def test_inserts_blank_line_below_return() -> None:
-    source = (
-        "def f(foo, bar, baz):\n"
-        "    if foo:\n"
-        "        return foo\n"
-        "    if bar:\n"
-        "        return baz\n"
-    )
+    source = "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n"
 
-    assert format_source(source) == (
-        "def f(foo, bar, baz):\n"
-        "    if foo:\n"
-        "        return foo\n"
-        "\n"
-        "    if bar:\n"
-        "        return baz\n"
-    )
+    assert format_source(source) == ("def f(foo, bar, baz):\n    if foo:\n        return foo\n\n    if bar:\n        return baz\n")
 
 
 def test_inserts_blank_line_above_return() -> None:
     source = "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n"
 
-    assert format_source(source) == (
-        "def f(baz):\n    if baz:\n        foo = 42 + 1337\n\n        return foo\n"
-    )
+    assert format_source(source) == ("def f(baz):\n    if baz:\n        foo = 42 + 1337\n\n        return foo\n")
 
 
 @pytest.mark.parametrize(
     ("source", "expected"),
     [
         pytest.param(
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        return 0\n"
-            "    else:\n"
-            "        return value\n",
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        return 0\n"
-            "\n"
-            "    return value\n",
+            "def f():\n    try:\n        value = risky()\n    except ValueError:\n        return 0\n    else:\n        return value\n",
+            "def f():\n    try:\n        value = risky()\n    except ValueError:\n        return 0\n\n    return value\n",
             id="every-except-exits-dedents",
         ),
         pytest.param(
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        value = 0\n"
-            "    else:\n"
-            "        log(value)\n",
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        value = 0\n"
-            "    else:\n"
-            "        log(value)\n",
+            "def f():\n    try:\n        value = risky()\n    except ValueError:\n        value = 0\n    else:\n        log(value)\n",
+            "def f():\n    try:\n        value = risky()\n    except ValueError:\n        value = 0\n    else:\n        log(value)\n",
             id="fall-through-except-kept",
         ),
         pytest.param(
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        raise\n"
-            "    else:\n"
-            "        log(value)\n"
-            "    finally:\n"
-            "        close()\n",
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        raise\n"
-            "    else:\n"
-            "        log(value)\n"
-            "    finally:\n"
-            "        close()\n",
+            "def f():\n    try:\n        value = risky()\n    except ValueError:\n        raise\n    else:\n        log(value)\n    finally:\n        close()\n",
+            "def f():\n    try:\n        value = risky()\n    except ValueError:\n        raise\n    else:\n        log(value)\n    finally:\n        close()\n",
             id="finally-clause-kept",
         ),
         pytest.param(
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        return 0\n"
-            "    else:\n"
-            '        text = """a\n'
-            'b"""\n'
-            "        return text\n",
-            "def f():\n"
-            "    try:\n"
-            "        value = risky()\n"
-            "    except ValueError:\n"
-            "        return 0\n"
-            "\n"
-            '    text = """a\n'
-            'b"""\n'
-            "\n"
-            "    return text\n",
+            'def f():\n    try:\n        value = risky()\n    except ValueError:\n        return 0\n    else:\n        text = """a\nb"""\n        return text\n',
+            'def f():\n    try:\n        value = risky()\n    except ValueError:\n        return 0\n\n    text = """a\nb"""\n\n    return text\n',
             id="string-lines-flatter-than-shift-preserved",
         ),
     ],
@@ -154,13 +83,7 @@ def test_same_line_sibling_return_spacing(source: str, expected: str) -> None:
 
 
 def test_format_is_idempotent() -> None:
-    source = (
-        "def f(foo, bar, baz):\n"
-        "    if foo:\n"
-        "        return foo\n"
-        "    if bar:\n"
-        "        return baz\n"
-    )
+    source = "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n"
 
     once = format_source(source)
 

@@ -27,6 +27,7 @@ from actually.violations import (
     Violation,
 )
 
+
 __all__ = [
     "ALL_GROUP",
     "ALL_RULE_CODES",

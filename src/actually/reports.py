@@ -6,6 +6,7 @@ from typing import Literal, get_args
 from actually.metadata import rule_docs_url
 from actually.violations import Violation
 
+
 OutputFormat = Literal[
     "text",
     "gitlab",
@@ -13,9 +14,7 @@ OutputFormat = Literal[
     "sarif",
 ]
 
-OUTPUT_FORMAT_BY_VALUE: dict[str, OutputFormat] = {
-    output_format: output_format for output_format in get_args(OutputFormat)
-}
+OUTPUT_FORMAT_BY_VALUE: dict[str, OutputFormat] = {output_format: output_format for output_format in get_args(OutputFormat)}
 
 GITLAB_SEVERITY = "major"
 SARIF_LEVEL = "warning"
@@ -47,11 +46,7 @@ def render_report(
 
 
 def _render_text(findings: tuple[Finding, ...], tool_version: str) -> str:
-    return "\n".join(
-        f"{finding.path}:{finding.violation.line}"
-        f" {finding.violation.rule.code} [{finding.violation.rule.name}] {finding.violation.message}"
-        for finding in findings
-    )
+    return "\n".join(f"{finding.path}:{finding.violation.line} {finding.violation.rule.code} [{finding.violation.rule.name}] {finding.violation.message}" for finding in findings)
 
 
 def _render_gitlab(findings: tuple[Finding, ...], tool_version: str) -> str:
@@ -77,9 +72,7 @@ def _render_gitlab(findings: tuple[Finding, ...], tool_version: str) -> str:
 
 def _render_github(findings: tuple[Finding, ...], tool_version: str) -> str:
     return "\n".join(
-        f"::error title={TOOL_NAME} ({finding.violation.rule.code}),"
-        f"file={finding.path},line={finding.violation.line}::{finding.violation.message}"
-        for finding in findings
+        f"::error title={TOOL_NAME} ({finding.violation.rule.code}),file={finding.path},line={finding.violation.line}::{finding.violation.message}" for finding in findings
     )
 
 

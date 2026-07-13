@@ -11,6 +11,7 @@ from actually.metadata import (
     load_rule_catalog,
 )
 
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_PATH = REPO_ROOT / "README.template.md"
 README_PATH = REPO_ROOT / "README.md"
@@ -25,15 +26,10 @@ GENERATED_BANNER = (
     " edit README.template.md / src/actually/rules.toml and run:  uv run python scripts/generate_docs.py -->"
 )
 
-PAGE_NOTICE = (
-    "Generated from [`rules.toml`](../src/actually/rules.toml) by"
-    " [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file."
-)
+PAGE_NOTICE = "Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file."
 
 
-@click.command(
-    help="Generate README.md and rules/*.md from README.template.md and src/actually/rules.toml."
-)
+@click.command(help="Generate README.md and rules/*.md from README.template.md and src/actually/rules.toml.")
 @click.option(
     "--check",
     "check_only",
@@ -46,10 +42,7 @@ def main(check_only: bool) -> None:
         _validate_snippets(rule)
 
     rendered_readme = _render_readme(catalog)
-    pages = {
-        RULES_DIR / f"{rule.name}.md": _render_rule_page(rule)
-        for rule in catalog.active
-    }
+    pages = {RULES_DIR / f"{rule.name}.md": _render_rule_page(rule) for rule in catalog.active}
     if check_only:
         _assert_fresh(rendered_readme, pages)
         click.echo("generated docs are fresh")
@@ -63,15 +56,11 @@ def main(check_only: bool) -> None:
 def _validate_snippets(rule: RuleMetadata) -> None:
     triggered = {violation.rule.code for violation in find_violations(rule.banned)}
     if rule.code not in triggered:
-        raise ValueError(
-            f"{rule.code}: the banned example does not trigger the rule (triggered: {sorted(triggered)})"
-        )
+        raise ValueError(f"{rule.code}: the banned example does not trigger the rule (triggered: {sorted(triggered)})")
 
     remaining = find_violations(rule.wanted)
     if remaining:
-        details = ", ".join(
-            f"{violation.rule.code}@{violation.line}" for violation in remaining
-        )
+        details = ", ".join(f"{violation.rule.code}@{violation.line}" for violation in remaining)
         raise ValueError(f"{rule.code}: the wanted example is not clean ({details})")
 
 
@@ -95,10 +84,7 @@ def _render_group_tables(catalog: RuleCatalog) -> str:
         for group in groups
     ]
     if catalog.retired:
-        names = ", ".join(
-            f"{rule.code} ({rule.name})"
-            for rule in sorted(catalog.retired, key=_retired_sort_key)
-        )
+        names = ", ".join(f"{rule.code} ({rule.name})" for rule in sorted(catalog.retired, key=_retired_sort_key))
         sections.append(f"Retired codes, never recycled: {names}.")
 
     return "\n\n".join(sections)
@@ -114,10 +100,7 @@ def _render_group_section(group: str, rules: tuple[RuleMetadata, ...]) -> str:
         "",
         "| Code | Rule | Status | Auto-fix | What it enforces |",
         "|:---|:---|:---|:---|:---|",
-        *(
-            f"| {rule.code} | [{rule.name}](rules/{rule.name}.md) | {rule.status} | {FIX_LABELS[rule.fix]} | {rule.summary} |"
-            for rule in sorted(rules, key=lambda rule: rule.code)
-        ),
+        *(f"| {rule.code} | [{rule.name}](rules/{rule.name}.md) | {rule.status} | {FIX_LABELS[rule.fix]} | {rule.summary} |" for rule in sorted(rules, key=lambda rule: rule.code)),
     ]
 
     return "\n".join(lines)
@@ -167,19 +150,14 @@ def _assert_fresh(rendered_readme: str, pages: dict[Path, str]) -> None:
 
 def _staleness_report(rendered_readme: str, pages: dict[Path, str]) -> tuple[str, ...]:
     problems = []
-    if (
-        not README_PATH.is_file()
-        or README_PATH.read_text(encoding="utf-8") != rendered_readme
-    ):
+    if not README_PATH.is_file() or README_PATH.read_text(encoding="utf-8") != rendered_readme:
         problems.append("README.md")
 
     for path, content in sorted(pages.items()):
         if not path.is_file() or path.read_text(encoding="utf-8") != content:
             problems.append(str(path.relative_to(REPO_ROOT)))
 
-    problems.extend(
-        f"{stray.relative_to(REPO_ROOT)} (stray)" for stray in _stray_pages(pages)
-    )
+    problems.extend(f"{stray.relative_to(REPO_ROOT)} (stray)" for stray in _stray_pages(pages))
 
     return tuple(problems)
 

@@ -12,6 +12,7 @@ from actually.config import (
 from actually.formatting import format_source
 from actually.violations import RuleCode
 
+
 pytestmark = pytest.mark.unit
 
 ALL_CODES: frozenset[RuleCode] = frozenset(
@@ -148,11 +149,9 @@ def test_check_reports_only_enabled_rules() -> None:
         violation.rule.code
         for violation in find_violations(
             source,
-            frozenset(
-                {
-                    "ACTC001",
-                }
-            ),
+            frozenset({
+                "ACTC001",
+            }),
         )
     ]
 
@@ -206,11 +205,9 @@ def test_format_inserts_comma_without_exploding_when_actl002_disabled() -> None:
             id="minority-exclusion-renders-as-except",
         ),
         pytest.param(
-            frozenset(
-                {
-                    "ACTC004",
-                }
-            ),
+            frozenset({
+                "ACTC004",
+            }),
             "ACTC004",
             id="minority-inclusion-renders-as-list",
         ),
@@ -237,9 +234,7 @@ def test_config_file_lists_are_loaded(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_parent_directory_config_is_not_sourced(tmp_path: Path) -> None:
-    (tmp_path / "well-actually.toml").write_text(
-        'exclude = ["ACTL"]\n', encoding="utf-8"
-    )
+    (tmp_path / "well-actually.toml").write_text('exclude = ["ACTL"]\n', encoding="utf-8")
     nested = tmp_path / "src" / "pkg"
     nested.mkdir(parents=True)
 
@@ -251,9 +246,7 @@ def test_parent_directory_config_is_not_sourced(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_cli_lists_replace_config_lists(tmp_path: Path) -> None:
-    (tmp_path / "well-actually.toml").write_text(
-        'exclude = ["ACTL"]\n', encoding="utf-8"
-    )
+    (tmp_path / "well-actually.toml").write_text('exclude = ["ACTL"]\n', encoding="utf-8")
 
     assert load_selection(tmp_path, (), ("ACTR",)).enabled == ALL_CODES - {
         "ACTR001",
@@ -263,9 +256,7 @@ def test_cli_lists_replace_config_lists(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_unknown_config_key_is_a_hard_error(tmp_path: Path) -> None:
-    (tmp_path / "well-actually.toml").write_text(
-        'select = ["ACTC"]\n', encoding="utf-8"
-    )
+    (tmp_path / "well-actually.toml").write_text('select = ["ACTC"]\n', encoding="utf-8")
 
     with pytest.raises(SelectionError, match="unknown keys"):
         load_selection(tmp_path, (), ())

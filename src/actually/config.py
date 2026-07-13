@@ -11,6 +11,7 @@ from actually.violations import (
     RuleSelector,
 )
 
+
 CONFIG_FILE_NAME = "well-actually.toml"
 KNOWN_CONFIG_KEYS = frozenset(
     {
@@ -36,9 +37,7 @@ def load_selection(
     cli_exclude: tuple[str, ...],
 ) -> LoadedSelection:
     candidate = work_dir / CONFIG_FILE_NAME
-    file_include, file_exclude = (
-        _parse_config(candidate) if candidate.is_file() else ((), ())
-    )
+    file_include, file_exclude = _parse_config(candidate) if candidate.is_file() else ((), ())
     include = cli_include if cli_include else file_include
     exclude = cli_exclude if cli_exclude else file_exclude
 
@@ -67,16 +66,9 @@ def resolve_selection(
     exclude_selectors = _narrowed(exclude)
     _reject_repeated_all(include_selectors, exclude_selectors)
     effective_include = _effective_include(include_selectors, exclude_selectors)
-    enabled = frozenset(
-        rule.code
-        for rule in RULES
-        if _match_length(rule.code, effective_include)
-        > _match_length(rule.code, exclude_selectors)
-    )
+    enabled = frozenset(rule.code for rule in RULES if _match_length(rule.code, effective_include) > _match_length(rule.code, exclude_selectors))
     if not enabled:
-        raise SelectionError(
-            "selection enables no rules — include at least one rule code or prefix"
-        )
+        raise SelectionError("selection enables no rules — include at least one rule code or prefix")
 
     return enabled
 
@@ -88,9 +80,7 @@ def _narrowed(entries: tuple[str, ...]) -> tuple[RuleSelector, ...]:
 def _narrowed_entry(entry: str) -> RuleSelector:
     selector = RULE_SELECTOR_BY_VALUE.get(entry)
     if selector is None:
-        raise SelectionError(
-            f"unknown rule selector {entry!r} — valid: {sorted(RULE_SELECTOR_BY_VALUE)}"
-        )
+        raise SelectionError(f"unknown rule selector {entry!r} — valid: {sorted(RULE_SELECTOR_BY_VALUE)}")
 
     return selector
 
@@ -101,9 +91,7 @@ def _reject_repeated_all(
 ) -> None:
     occurrences = sum(1 for entry in (*include, *exclude) if entry == ALL_GROUP)
     if occurrences > 1:
-        raise SelectionError(
-            f"{ALL_GROUP} may appear at most once across include and exclude"
-        )
+        raise SelectionError(f"{ALL_GROUP} may appear at most once across include and exclude")
 
 
 def _effective_include(
@@ -114,9 +102,7 @@ def _effective_include(
         return include
 
     if ALL_GROUP in exclude:
-        raise SelectionError(
-            f"exclude = {ALL_GROUP} requires at least one include entry"
-        )
+        raise SelectionError(f"exclude = {ALL_GROUP} requires at least one include entry")
 
     return (ALL_GROUP,)
 
@@ -142,9 +128,7 @@ def _parse_config(path: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
     payload = tomllib.loads(path.read_text(encoding="utf-8"))
     unknown = set(payload) - KNOWN_CONFIG_KEYS
     if unknown:
-        raise SelectionError(
-            f"{path}: unknown keys {sorted(unknown)} — valid: {sorted(KNOWN_CONFIG_KEYS)}"
-        )
+        raise SelectionError(f"{path}: unknown keys {sorted(unknown)} — valid: {sorted(KNOWN_CONFIG_KEYS)}")
 
     return (
         _string_tuple(payload, "include", path),

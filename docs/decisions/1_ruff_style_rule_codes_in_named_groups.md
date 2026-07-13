@@ -62,6 +62,12 @@ is allocated only when the rule is implemented:
   not an `else` exception; the diverging part belongs in a helper guarded at the call site
 - suite-on-its-own-line — one-liner suites (`if x: return`) as a layout group candidate,
   which would claim a new group letter
+- no-positional-role-index — a literal index into a role-carrying structure (`runs[0]`,
+  `groups()[2]`); no ruff rule covers this and only `PLR2004` grazes the magic-number half
+- no-subscript-chain-assert — an `assert` poking through a subscript chain
+  (`doc["a"][0]["b"] == …`) instead of one typed comparison; AST-detectable, unlike a naive
+  one-assert-per-test count, which cannot distinguish the wanted single typed equality from
+  a custom assertion helper's internal asserts
 
 ## Consequences
 

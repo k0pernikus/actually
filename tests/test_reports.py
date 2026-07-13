@@ -5,6 +5,7 @@ import pytest
 from actually.reports import Finding, render_report
 from actually.violations import NO_ELSE, TRAILING_COMMA, Violation
 
+
 pytestmark = pytest.mark.unit
 
 ELSE_FINDING = Finding(
@@ -32,9 +33,7 @@ def test_text_report_matches_the_terminal_line() -> None:
         "9.9.9",
     )
 
-    assert report == (
-        "src/app.py:4 ACTC001 [no-else] banned `else` clause on `if` — restructure to guard clauses"
-    )
+    assert report == ("src/app.py:4 ACTC001 [no-else] banned `else` clause on `if` — restructure to guard clauses")
 
 
 def test_gitlab_report_is_code_climate_shaped() -> None:
@@ -84,10 +83,7 @@ def test_github_report_is_a_workflow_command() -> None:
         "9.9.9",
     )
 
-    assert report == (
-        "::error title=well-actually (ACTC001),file=src/app.py,line=4"
-        "::banned `else` clause on `if` — restructure to guard clauses"
-    )
+    assert report == ("::error title=well-actually (ACTC001),file=src/app.py,line=4::banned `else` clause on `if` — restructure to guard clauses")
 
 
 def test_sarif_report_carries_tool_results_and_rule_help() -> None:
@@ -110,13 +106,9 @@ def test_sarif_report_carries_tool_results_and_rule_help() -> None:
         "ACTC001",
         "ACTL001",
     ]
-    assert run["tool"]["driver"]["rules"][0]["helpUri"] == (
-        "https://github.com/k0pernikus/actually/blob/main/rules/no-else.md"
-    )
+    assert run["tool"]["driver"]["rules"][0]["helpUri"] == ("https://github.com/k0pernikus/actually/blob/main/rules/no-else.md")
     result = run["results"][0]
     assert result["ruleId"] == "ACTC001"
     assert result["level"] == "warning"
     assert result["locations"][0]["physicalLocation"]["region"]["startLine"] == 4
-    assert result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == (
-        "src/app.py"
-    )
+    assert result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == ("src/app.py")

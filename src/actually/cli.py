@@ -30,6 +30,7 @@ from actually.reports import (
 )
 from actually.violations import ALL_GROUP, RuleCode
 
+
 STDOUT_SENTINEL_PATH = "-"
 
 click.rich_click.COMMAND_GROUPS = {
@@ -168,9 +169,7 @@ def _fix_cell(rule: RuleMetadata) -> str:
     show_default=True,
     help="Write the report to this file; - means stdout.",
 )
-@click.argument(
-    "paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path)
-)
+@click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
 def check(
     paths: tuple[Path, ...],
     include_entries: tuple[str, ...],
@@ -222,9 +221,7 @@ def check(
     show_default=True,
     help="Write the report to this file; - means stdout.",
 )
-@click.argument(
-    "paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path)
-)
+@click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
 def format_files(
     paths: tuple[Path, ...],
     only_autofixable: bool,
@@ -262,9 +259,7 @@ def _declare(loaded: LoadedSelection) -> None:
         return
 
     if description == ALL_GROUP:
-        click.echo(
-            f"No {CONFIG_FILE_NAME} found, running with default '{ALL_GROUP}'", err=True
-        )
+        click.echo(f"No {CONFIG_FILE_NAME} found, running with default '{ALL_GROUP}'", err=True)
 
         return
 
@@ -280,11 +275,7 @@ def _collect_findings(
     apply_fixes: bool,
     enabled: frozenset[RuleCode],
 ) -> tuple[Finding, ...]:
-    return tuple(
-        finding
-        for file in python_files(paths)
-        for finding in _process_file(file, apply_fixes, enabled)
-    )
+    return tuple(finding for file in python_files(paths) for finding in _process_file(file, apply_fixes, enabled))
 
 
 def _process_file(
@@ -298,10 +289,7 @@ def _process_file(
         file.write_text(checked, encoding="utf-8")
         click.secho(f"fixed: {file}", fg="green", err=True)
 
-    return tuple(
-        Finding(path=str(file), violation=violation)
-        for violation in find_violations(checked, enabled)
-    )
+    return tuple(Finding(path=str(file), violation=violation) for violation in find_violations(checked, enabled))
 
 
 def _emit_report(
@@ -309,9 +297,7 @@ def _emit_report(
     findings: tuple[Finding, ...],
     output_file: str,
 ) -> None:
-    report = render_report(
-        output_format, findings, distribution_version("well-actually")
-    )
+    report = render_report(output_format, findings, distribution_version("well-actually"))
     if output_file != STDOUT_SENTINEL_PATH:
         Path(output_file).write_text(f"{report}\n", encoding="utf-8")
 

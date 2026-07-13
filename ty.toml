@@ -1,0 +1,18 @@
+[environment]
+python-version = "3.12"
+
+[rules]
+ambiguous-protocol-member = "error"
+deprecated = "error"
+ignore-comment-unknown-rule = "error"
+ineffective-final = "error"
+invalid-enum-member-annotation = "error"
+invalid-ignore-comment = "error"
+invalid-legacy-positional-parameter = "error"
+invalid-named-tuple-override = "error"
+
+[terminal]
+error-on-warning = true
+
+[analysis]
+respect-type-ignore-comments = false

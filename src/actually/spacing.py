@@ -3,6 +3,7 @@ from typing import Literal
 
 from ast_grep_py import SgNode, SgRoot
 
+
 CLAUSE_KINDS = frozenset(
     {
         "case_clause",
@@ -32,11 +33,7 @@ class ReturnSpacingGap:
 def return_spacing_gaps(source: str) -> tuple[ReturnSpacingGap, ...]:
     root = SgRoot(source, "python").root()
 
-    return tuple(
-        gap
-        for statement in root.find_all(kind="return_statement")
-        for gap in (*_gap_above(statement), *_gap_below(statement))
-    )
+    return tuple(gap for statement in root.find_all(kind="return_statement") for gap in (*_gap_above(statement), *_gap_below(statement)))
 
 
 def _gap_above(statement: SgNode) -> tuple[ReturnSpacingGap, ...]:
@@ -74,9 +71,7 @@ def _gap(statement: SgNode, side: Literal["above", "below"]) -> ReturnSpacingGap
 
 def _preceding_code_on_an_earlier_line(statement: SgNode) -> SgNode | None:
     current = statement.prev()
-    while (
-        current is not None and current.range().end.line == statement.range().start.line
-    ):
+    while current is not None and current.range().end.line == statement.range().start.line:
         current = current.prev()
 
     return current

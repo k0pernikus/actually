@@ -5,6 +5,7 @@ from typing import Literal
 
 from actually.violations import RULES, Rule, RuleCode, RuleGroup, RuleName
 
+
 RULES_TOML_RESOURCE = "rules.toml"
 RULE_DOCS_BASE_URL = "https://github.com/k0pernikus/actually/blob/main/rules"
 
@@ -84,18 +85,16 @@ def rule_docs_url(name: RuleName) -> str:
 
 
 def load_rule_catalog() -> RuleCatalog:
-    payload = tomllib.loads(
-        files("actually").joinpath(RULES_TOML_RESOURCE).read_text(encoding="utf-8")
-    )
+    payload = tomllib.loads(files("actually").joinpath(RULES_TOML_RESOURCE).read_text(encoding="utf-8"))
     entries = payload.get("rules")
     if not isinstance(entries, list):
-        raise ValueError("rules.toml must declare an array of [[rules]] tables")
+        raise TypeError("rules.toml must declare an array of [[rules]] tables")
 
     active: list[RuleMetadata] = []
     retired: list[RetiredRuleMetadata] = []
     for entry in entries:
         if not isinstance(entry, dict):
-            raise ValueError("every [[rules]] entry must be a table")
+            raise TypeError("every [[rules]] entry must be a table")
 
         status = _validated_status(entry)
         if status == "removed":
@@ -170,9 +169,7 @@ def _registered_rule(code: str) -> Rule:
 def _reject_field_drift(entry: dict[str, object], key: str, registered: str) -> None:
     declared = _required_string(entry, key)
     if declared != registered:
-        raise ValueError(
-            f"rules.toml {key} {declared!r} does not match the registry {registered!r}"
-        )
+        raise ValueError(f"rules.toml {key} {declared!r} does not match the registry {registered!r}")
 
 
 def _retired_rule(entry: dict[str, object]) -> RetiredRuleMetadata:
@@ -196,9 +193,7 @@ def _fix_capability(entry: dict[str, object]) -> FixCapability:
     if fix == "partial":
         return "partial"
 
-    raise ValueError(
-        f"invalid fix {fix!r} — declare one of {sorted(DECLARABLE_FIX_VALUES)} or omit the key"
-    )
+    raise ValueError(f"invalid fix {fix!r} — declare one of {sorted(DECLARABLE_FIX_VALUES)} or omit the key")
 
 
 def _reject_unknown_keys(entry: dict[str, object], allowed: frozenset[str]) -> None:
@@ -224,14 +219,8 @@ def _validate_registry_congruence(catalog: RuleCatalog) -> None:
     documented = {rule.code for rule in catalog.active}
     registered = {rule.code for rule in RULES}
     if documented != registered:
-        raise ValueError(
-            f"rules.toml documents {sorted(documented)} but the code registry holds {sorted(registered)}"
-        )
+        raise ValueError(f"rules.toml documents {sorted(documented)} but the code registry holds {sorted(registered)}")
 
-    still_implemented = {rule.code for rule in catalog.retired} & {
-        str(code) for code in registered
-    }
+    still_implemented = {rule.code for rule in catalog.retired} & {str(code) for code in registered}
     if still_implemented:
-        raise ValueError(
-            f"removed rules still present in the code registry: {sorted(still_implemented)}"
-        )
+        raise ValueError(f"removed rules still present in the code registry: {sorted(still_implemented)}")

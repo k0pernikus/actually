@@ -3,13 +3,12 @@ import pytest
 from actually.checks import find_violations
 from actually.formatting import format_source
 
+
 pytestmark = pytest.mark.unit
 
 
 def outline(source: str) -> list[tuple[str, int]]:
-    return [
-        (violation.rule.code, violation.line) for violation in find_violations(source)
-    ]
+    return [(violation.rule.code, violation.line) for violation in find_violations(source)]
 
 
 @pytest.mark.parametrize(

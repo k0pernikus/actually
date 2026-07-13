@@ -3,6 +3,7 @@ from typing import Literal
 
 from ast_grep_py import SgNode, SgRoot
 
+
 LiteralGapKind = Literal["missing-trailing-comma", "elements-share-lines"]
 
 LITERAL_BRACKETS = {
@@ -37,11 +38,7 @@ def literal_layout_gaps(source: str) -> tuple[LiteralLayoutGap, ...]:
 
 
 def canonicalizable_literals(source: str) -> tuple[SgNode, ...]:
-    candidates = [
-        literal
-        for literal in _collection_literals(SgRoot(source, "python").root())
-        if not _is_one_element_per_line(literal) and _is_explodable(literal)
-    ]
+    candidates = [literal for literal in _collection_literals(SgRoot(source, "python").root()) if not _is_one_element_per_line(literal) and _is_explodable(literal)]
 
     return _outermost(candidates)
 
@@ -67,13 +64,9 @@ def missing_comma_insertions(source: str) -> tuple[CommaInsertion, ...]:
 
 def insert_commas(source: str, insertions: tuple[CommaInsertion, ...]) -> str:
     lines = source.split("\n")
-    for insertion in sorted(
-        insertions, key=lambda entry: (entry.line, entry.column), reverse=True
-    ):
+    for insertion in sorted(insertions, key=lambda entry: (entry.line, entry.column), reverse=True):
         text = lines[insertion.line]
-        lines[insertion.line] = (
-            text[: insertion.column] + "," + text[insertion.column :]
-        )
+        lines[insertion.line] = text[: insertion.column] + "," + text[insertion.column :]
 
     return "\n".join(lines)
 
@@ -90,22 +83,13 @@ def _gap_kinds(literal: SgNode) -> tuple[LiteralGapKind, ...]:
 
 
 def _collection_literals(root: SgNode) -> tuple[SgNode, ...]:
-    literals = [
-        node
-        for kind in LITERAL_BRACKETS
-        for node in root.find_all(kind=kind)
-        if _elements(node) and not _inside_interpolation(node)
-    ]
+    literals = [node for kind in LITERAL_BRACKETS for node in root.find_all(kind=kind) if _elements(node) and not _inside_interpolation(node)]
 
     return tuple(sorted(literals, key=_start_position))
 
 
 def _elements(literal: SgNode) -> tuple[SgNode, ...]:
-    return tuple(
-        child
-        for child in literal.children()
-        if child.is_named() and child.kind() != "comment"
-    )
+    return tuple(child for child in literal.children() if child.is_named() and child.kind() != "comment")
 
 
 def _inside_interpolation(node: SgNode) -> bool:
@@ -121,11 +105,7 @@ def _inside_interpolation(node: SgNode) -> bool:
 
 def _has_trailing_comma(literal: SgNode) -> bool:
     children = literal.children()
-    last_element_index = max(
-        index
-        for index, child in enumerate(children)
-        if child.is_named() and child.kind() != "comment"
-    )
+    last_element_index = max(index for index, child in enumerate(children) if child.is_named() and child.kind() != "comment")
 
     return any(child.kind() == "," for child in children[last_element_index + 1 :])
 
@@ -138,20 +118,14 @@ def _is_one_element_per_line(literal: SgNode) -> bool:
     if elements[-1].range().end.line == literal.range().end.line:
         return False
 
-    return all(
-        later.range().start.line > earlier.range().end.line
-        for earlier, later in zip(elements, elements[1:], strict=False)
-    )
+    return all(later.range().start.line > earlier.range().end.line for earlier, later in zip(elements, elements[1:], strict=False))
 
 
 def _is_explodable(literal: SgNode) -> bool:
     if any(child.kind() == "comment" for child in literal.children()):
         return False
 
-    return all(
-        element.range().start.line == element.range().end.line
-        for element in _elements(literal)
-    )
+    return all(element.range().start.line == element.range().end.line for element in _elements(literal))
 
 
 def _outermost(literals: list[SgNode]) -> tuple[SgNode, ...]:
@@ -182,9 +156,7 @@ def _exploded(lines: list[str], literal: SgNode) -> list[str]:
     prefix = start_line_text[: start.column]
     suffix = lines[end.line][end.column :]
     indent = start_line_text[: len(start_line_text) - len(start_line_text.lstrip())]
-    element_lines = [
-        f"{indent}{INDENT}{element.text()}," for element in _elements(literal)
-    ]
+    element_lines = [f"{indent}{INDENT}{element.text()}," for element in _elements(literal)]
 
     return [
         *lines[: start.line],

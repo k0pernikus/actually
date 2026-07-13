@@ -33,6 +33,16 @@ hooks {
         glob = "**/*.toml"
         fix = "uv run taplo format {{files}}"
       }
+      ["ruff-config-whole-tree"] {
+        glob = "ruff.toml"
+        depends = List("toml-format")
+        fix = "uv run ruff format . && uv run ruff check --fix ."
+      }
+      ["ty-config-whole-tree"] {
+        glob = "ty.toml"
+        depends = List("toml-format")
+        check = "uv run ty check src tests scripts"
+      }
       ["regenerate-docs"] {
         depends = List("toml-format")
         glob =

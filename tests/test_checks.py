@@ -2,13 +2,12 @@ import pytest
 
 from actually.checks import find_violations
 
+
 pytestmark = pytest.mark.unit
 
 
 def outline(source: str) -> list[tuple[str, int]]:
-    return [
-        (violation.rule.code, violation.line) for violation in find_violations(source)
-    ]
+    return [(violation.rule.code, violation.line) for violation in find_violations(source)]
 
 
 def test_else_on_if_is_flagged() -> None:
@@ -20,15 +19,7 @@ def test_else_on_if_is_flagged() -> None:
 
 
 def test_else_on_try_names_the_construct() -> None:
-    source = (
-        "def f():\n"
-        "    try:\n"
-        "        risky()\n"
-        "    except ValueError:\n"
-        "        return 0\n"
-        "    else:\n"
-        "        return 1\n"
-    )
+    source = "def f():\n    try:\n        risky()\n    except ValueError:\n        return 0\n    else:\n        return 1\n"
 
     violations = find_violations(source)
 
@@ -47,13 +38,7 @@ def test_completion_else_on_for_is_flagged() -> None:
 
 
 def test_elif_is_flagged() -> None:
-    source = (
-        "def f(x):\n"
-        "    if x == 1:\n"
-        "        return 1\n"
-        "    elif x == 2:\n"
-        "        return 2\n"
-    )
+    source = "def f(x):\n    if x == 1:\n        return 1\n    elif x == 2:\n        return 2\n"
 
     assert outline(source) == [
         ("ACTC002", 4),
@@ -156,13 +141,7 @@ def test_scoped_label_parser_shape_is_clean() -> None:
 
 
 def test_return_needs_blank_line_below_when_code_follows() -> None:
-    source = (
-        "def f(foo, bar, baz):\n"
-        "    if foo:\n"
-        "        return foo\n"
-        "    if bar:\n"
-        "        return baz\n"
-    )
+    source = "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n"
 
     assert outline(source) == [
         ("ACTR002", 3),
