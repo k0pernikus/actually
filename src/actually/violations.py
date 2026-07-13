@@ -70,24 +70,28 @@ RULES: tuple[Rule, ...] = (
 
 ALL_RULE_CODES: frozenset[RuleCode] = frozenset(rule.code for rule in RULES)
 
-RuleSelector = Literal[
-    "__ALL__",
-    "ACT",
+RuleGroupPrefix = Literal[
     "ACTC",
-    "ACTC001",
-    "ACTC002",
-    "ACTC003",
-    "ACTC004",
     "ACTL",
-    "ACTL001",
-    "ACTL002",
     "ACTR",
-    "ACTR001",
-    "ACTR002",
 ]
 
+AllGroup = Literal["__ALL__"]
+
+RuleSelector = AllGroup | RuleGroupPrefix | RuleCode
+
+ALL_GROUP: AllGroup = "__ALL__"
+
+RULE_GROUP_BY_PREFIX: dict[RuleGroupPrefix, RuleGroup] = {
+    "ACTC": "actually-conditionals",
+    "ACTL": "actually-literals",
+    "ACTR": "actually-returns",
+}
+
 RULE_SELECTOR_BY_VALUE: dict[str, RuleSelector] = {
-    selector: selector for selector in get_args(RuleSelector)
+    ALL_GROUP: ALL_GROUP,
+    **{prefix: prefix for prefix in get_args(RuleGroupPrefix)},
+    **{code: code for code in get_args(RuleCode)},
 }
 
 

@@ -78,12 +78,6 @@ ALL_CODES: frozenset[RuleCode] = frozenset(
             },
             id="specific-exclude-beats-group-include",
         ),
-        pytest.param(
-            ("ACT",),
-            (),
-            ALL_CODES,
-            id="act-prefix-selects-everything",
-        ),
     ],
 )
 def test_selection_resolves(
@@ -116,6 +110,11 @@ def test_selection_resolves(
             ("ACTX001",),
             (),
             id="unknown-selector",
+        ),
+        pytest.param(
+            ("ACT",),
+            (),
+            id="bare-act-is-not-a-selector",
         ),
         pytest.param(
             ("no-else",),

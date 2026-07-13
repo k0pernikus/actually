@@ -2,13 +2,13 @@ import tomllib
 from pathlib import Path
 
 from actually.violations import (
+    ALL_GROUP,
     RULE_SELECTOR_BY_VALUE,
     RULES,
     RuleCode,
     RuleSelector,
 )
 
-ALL_SENTINEL: RuleSelector = "__ALL__"
 CONFIG_FILE_NAME = "well-actually.toml"
 KNOWN_CONFIG_KEYS = frozenset(
     {
@@ -74,10 +74,10 @@ def _reject_repeated_all(
     include: tuple[RuleSelector, ...],
     exclude: tuple[RuleSelector, ...],
 ) -> None:
-    occurrences = sum(1 for entry in (*include, *exclude) if entry == ALL_SENTINEL)
+    occurrences = sum(1 for entry in (*include, *exclude) if entry == ALL_GROUP)
     if occurrences > 1:
         raise SelectionError(
-            f"{ALL_SENTINEL} may appear at most once across include and exclude"
+            f"{ALL_GROUP} may appear at most once across include and exclude"
         )
 
 
@@ -88,12 +88,12 @@ def _effective_include(
     if include:
         return include
 
-    if ALL_SENTINEL in exclude:
+    if ALL_GROUP in exclude:
         raise SelectionError(
-            f"exclude = {ALL_SENTINEL} requires at least one include entry"
+            f"exclude = {ALL_GROUP} requires at least one include entry"
         )
 
-    return (ALL_SENTINEL,)
+    return (ALL_GROUP,)
 
 
 def _match_length(code: RuleCode, entries: tuple[RuleSelector, ...]) -> int:
@@ -104,7 +104,7 @@ def _match_length(code: RuleCode, entries: tuple[RuleSelector, ...]) -> int:
 
 
 def _entry_match_length(code: RuleCode, entry: RuleSelector) -> int:
-    if entry == ALL_SENTINEL:
+    if entry == ALL_GROUP:
         return 0
 
     if code.startswith(entry):

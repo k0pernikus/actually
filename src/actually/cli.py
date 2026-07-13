@@ -25,13 +25,13 @@ def main() -> None:
     "--include",
     "include_entries",
     multiple=True,
-    help="Rule code, code prefix, or __ALL__; repeatable. Overrides the config file's include list.",
+    help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's include list.",
 )
 @click.option(
     "--exclude",
     "exclude_entries",
     multiple=True,
-    help="Rule code, code prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
+    help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
 )
 @click.argument(
     "paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path)
@@ -60,13 +60,13 @@ def check(
     "--include",
     "include_entries",
     multiple=True,
-    help="Rule code, code prefix, or __ALL__; repeatable. Overrides the config file's include list.",
+    help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's include list.",
 )
 @click.option(
     "--exclude",
     "exclude_entries",
     multiple=True,
-    help="Rule code, code prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
+    help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
 )
 @click.argument(
     "paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path)

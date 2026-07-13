@@ -5,24 +5,32 @@ from actually.formatting import format_source
 from actually.literals import LiteralLayoutGap, literal_layout_gaps
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 from actually.violations import (
+    ALL_GROUP,
     ALL_RULE_CODES,
+    RULE_GROUP_BY_PREFIX,
     RULES,
+    AllGroup,
     Rule,
     RuleCode,
     RuleGroup,
+    RuleGroupPrefix,
     RuleName,
     RuleSelector,
     Violation,
 )
 
 __all__ = [
+    "ALL_GROUP",
     "ALL_RULE_CODES",
     "RULES",
+    "RULE_GROUP_BY_PREFIX",
+    "AllGroup",
     "LiteralLayoutGap",
     "ReturnSpacingGap",
     "Rule",
     "RuleCode",
     "RuleGroup",
+    "RuleGroupPrefix",
     "RuleName",
     "RuleSelector",
     "SelectionError",

@@ -55,9 +55,10 @@ explicitly is always linted.
 Select the rule subset in a `well-actually.toml` (discovered by walking up from the working
 directory) or with repeatable `--include` / `--exclude` options, which override the file's
 corresponding list ([ADR 5](docs/decisions/5_rule_selection_by_prefix_specificity.md)).
-Entries are rule codes (`ACTC004`), code prefixes (`ACTC` — a group, `ACT` — everything), or
-the `__ALL__` sentinel. The longest match per rule wins; ties go to `exclude`. `include`
-defaults to `__ALL__`, so exclude-only configs just work:
+Entries are rule codes (`ACTC004`), group prefixes (`ACTC`), or `__ALL__` — the special
+all-encompassing group ([ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md)). The
+longest match per rule wins; ties go to `exclude`. `include` defaults to `__ALL__`, so
+exclude-only configs just work:
 
 ```toml
 exclude = ["ACTL"]

@@ -20,11 +20,12 @@
   config file's corresponding list wholesale
 - the config file is discovered by walking up from the working directory; the nearest file
   wins; no file means defaults
-- entries are rule codes (`ACTC004`), code prefixes (`ACTC`, `ACT`), or the `__ALL__`
-  sentinel — never rule names or group names; one vocabulary, one axis
-- the vocabulary is the closed `RuleSelector` `Literal` in the registry; untrusted strings
-  from CLI and TOML narrow through one boundary lookup (`RULE_SELECTOR_BY_VALUE`, derived
-  from the `Literal` — never hand-enumerated) and an unknown value fails there
+- entries are rule codes (`ACTC004`), group prefixes (`ACTC`), or the `__ALL__` all-group —
+  the three-taxon vocabulary of [ADR 6](6_selector_taxonomy_rule_group_all.md); never rule
+  names or group display names
+- untrusted strings from CLI and TOML narrow through one boundary lookup
+  (`RULE_SELECTOR_BY_VALUE`, derived from the taxa — never hand-enumerated) and an unknown
+  value fails there
 - resolution is specificity, not order: for each rule the longest matching entry wins;
   `__ALL__` matches everything at length zero; a tie goes to `exclude`
 - `include` defaults to `__ALL__`; `exclude` defaults to empty — the wanted state is running
