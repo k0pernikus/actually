@@ -1,3 +1,4 @@
+from importlib.metadata import version as distribution_version
 from pathlib import Path
 
 import rich_click as click
@@ -21,7 +22,15 @@ from actually.metadata import (
     load_rule_catalog,
     rule_docs_url,
 )
+from actually.reports import (
+    OUTPUT_FORMAT_BY_VALUE,
+    Finding,
+    OutputFormat,
+    render_report,
+)
 from actually.violations import ALL_GROUP, RuleCode
+
+STDOUT_SENTINEL_PATH = "-"
 
 click.rich_click.COMMAND_GROUPS = {
     "*": [
@@ -144,6 +153,21 @@ def _fix_cell(rule: RuleMetadata) -> str:
     multiple=True,
     help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
 )
+@click.option(
+    "--output-format",
+    "output_format_value",
+    type=click.Choice(sorted(OUTPUT_FORMAT_BY_VALUE)),
+    default="text",
+    show_default=True,
+    help="Report format: gitlab (Code Climate JSON for the codequality artifact), github (workflow-command annotations), sarif (SARIF 2.1.0), or text.",
+)
+@click.option(
+    "--output-file",
+    "output_file",
+    default=STDOUT_SENTINEL_PATH,
+    show_default=True,
+    help="Write the report to this file; - means stdout.",
+)
 @click.argument(
     "paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path)
 )
@@ -151,9 +175,13 @@ def check(
     paths: tuple[Path, ...],
     include_entries: tuple[str, ...],
     exclude_entries: tuple[str, ...],
+    output_format_value: str,
+    output_file: str,
 ) -> None:
     enabled = _selection(include_entries, exclude_entries)
-    if _report_files(paths, apply_fixes=False, enabled=enabled):
+    findings = _collect_findings(paths, apply_fixes=False, enabled=enabled)
+    _emit_report(_output_format(output_format_value), findings, output_file)
+    if findings:
         raise SystemExit(1)
 
 
@@ -179,6 +207,21 @@ def check(
     multiple=True,
     help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
 )
+@click.option(
+    "--output-format",
+    "output_format_value",
+    type=click.Choice(sorted(OUTPUT_FORMAT_BY_VALUE)),
+    default="text",
+    show_default=True,
+    help="Report format: gitlab (Code Climate JSON for the codequality artifact), github (workflow-command annotations), sarif (SARIF 2.1.0), or text.",
+)
+@click.option(
+    "--output-file",
+    "output_file",
+    default=STDOUT_SENTINEL_PATH,
+    show_default=True,
+    help="Write the report to this file; - means stdout.",
+)
 @click.argument(
     "paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path)
 )
@@ -187,9 +230,13 @@ def format_files(
     only_autofixable: bool,
     include_entries: tuple[str, ...],
     exclude_entries: tuple[str, ...],
+    output_format_value: str,
+    output_file: str,
 ) -> None:
     enabled = _selection(include_entries, exclude_entries)
-    if _report_files(paths, apply_fixes=True, enabled=enabled) and not only_autofixable:
+    findings = _collect_findings(paths, apply_fixes=True, enabled=enabled)
+    _emit_report(_output_format(output_format_value), findings, output_file)
+    if findings and not only_autofixable:
         raise SystemExit(1)
 
 
@@ -224,13 +271,19 @@ def _declare(loaded: LoadedSelection) -> None:
     click.echo(f"No {CONFIG_FILE_NAME} found, running with: {description}", err=True)
 
 
-def _report_files(
+def _output_format(value: str) -> OutputFormat:
+    return OUTPUT_FORMAT_BY_VALUE[value]
+
+
+def _collect_findings(
     paths: tuple[Path, ...],
     apply_fixes: bool,
     enabled: frozenset[RuleCode],
-) -> int:
-    return sum(
-        _process_file(file, apply_fixes, enabled) for file in python_files(paths)
+) -> tuple[Finding, ...]:
+    return tuple(
+        finding
+        for file in python_files(paths)
+        for finding in _process_file(file, apply_fixes, enabled)
     )
 
 
@@ -238,20 +291,34 @@ def _process_file(
     file: Path,
     apply_fixes: bool,
     enabled: frozenset[RuleCode],
-) -> int:
+) -> tuple[Finding, ...]:
     source = file.read_text(encoding="utf-8")
     checked = _formatted(file, source, enabled) if apply_fixes else source
     if checked != source:
         file.write_text(checked, encoding="utf-8")
-        click.secho(f"fixed: {file}", fg="green")
+        click.secho(f"fixed: {file}", fg="green", err=True)
 
-    violations = find_violations(checked, enabled)
-    for violation in violations:
-        click.echo(
-            f"{file}:{violation.line} {violation.rule.code} [{violation.rule.name}] {violation.message}"
-        )
+    return tuple(
+        Finding(path=str(file), violation=violation)
+        for violation in find_violations(checked, enabled)
+    )
 
-    return len(violations)
+
+def _emit_report(
+    output_format: OutputFormat,
+    findings: tuple[Finding, ...],
+    output_file: str,
+) -> None:
+    report = render_report(
+        output_format, findings, distribution_version("well-actually")
+    )
+    if output_file != STDOUT_SENTINEL_PATH:
+        Path(output_file).write_text(f"{report}\n", encoding="utf-8")
+
+        return
+
+    if report:
+        click.echo(report)
 
 
 def _formatted(file: Path, source: str, enabled: frozenset[RuleCode]) -> str:

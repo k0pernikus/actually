@@ -10,6 +10,7 @@ from actually.metadata import (
     load_rule_catalog,
     rule_docs_url,
 )
+from actually.reports import Finding, OutputFormat, render_report
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 from actually.violations import (
     ALL_GROUP,
@@ -32,7 +33,9 @@ __all__ = [
     "RULES",
     "RULE_GROUP_BY_PREFIX",
     "AllGroup",
+    "Finding",
     "LiteralLayoutGap",
+    "OutputFormat",
     "RetiredRuleMetadata",
     "ReturnSpacingGap",
     "RuleCatalog",
@@ -51,6 +54,7 @@ __all__ = [
     "load_rule_catalog",
     "load_selection",
     "python_files",
+    "render_report",
     "resolve_selection",
     "return_spacing_gaps",
     "rule_docs_url",

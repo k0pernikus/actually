@@ -110,6 +110,25 @@ once across both lists, `exclude = ["__ALL__"]` without any include entry, and a
 that enables no rules. `format` obeys the selection — a disabled rule neither reports nor
 fixes.
 
+## CI Reports
+
+`check` and `format` emit machine-readable reports via `--output-format`
+(`text`/`gitlab`/`github`/`sarif`) and `--output-file`
+([ADR 7](docs/decisions/7_ci_report_formats_mirror_ruff.md)). GitLab code quality:
+
+```yaml
+actually:
+  script:
+    - uvx well-actually@latest check --output-format=gitlab --output-file=gl-code-quality-report.json .
+  artifacts:
+    when: always
+    reports:
+      codequality: gl-code-quality-report.json
+```
+
+GitHub inline annotations need no upload — `--output-format=github` prints workflow commands;
+`--output-format=sarif` produces SARIF 2.1.0 for GitHub code scanning or any SARIF consumer.
+
 ## Example
 
 ```python
