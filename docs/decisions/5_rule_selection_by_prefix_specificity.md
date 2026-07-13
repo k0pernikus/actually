@@ -18,8 +18,10 @@
 - selection lives in `well-actually.toml` (keys `include`, `exclude`, arrays of strings) and
   on the CLI (`--include` / `--exclude`, repeatable); a CLI list, when given, replaces the
   config file's corresponding list wholesale
-- the config file is discovered by walking up from the working directory; the nearest file
-  wins; no file means defaults
+- the config file is sourced from the current working directory ONLY — no walking up the
+  tree, no merging; the invocation declares what it found and the resolved selection on
+  stderr (`Found well-actually.toml. Running with: …` / `No well-actually.toml found,
+  running with default '__ALL__'`), so the active subset is never ambient
 - entries are rule codes (`ACTC004`), group prefixes (`ACTC`), or the `__ALL__` all-group —
   the three-taxon vocabulary of [ADR 6](6_selector_taxonomy_rule_group_all.md); never rule
   names or group display names

@@ -3,7 +3,12 @@ from pathlib import Path
 import pytest
 
 from actually.checks import find_violations
-from actually.config import SelectionError, load_selection, resolve_selection
+from actually.config import (
+    SelectionError,
+    describe_selection,
+    load_selection,
+    resolve_selection,
+)
 from actually.formatting import format_source
 from actually.violations import RuleCode
 
@@ -183,6 +188,38 @@ def test_format_inserts_comma_without_exploding_when_actl002_disabled() -> None:
     ) == ('point = {"x": 1, "y": 2,}\n')
 
 
+@pytest.mark.parametrize(
+    ("enabled", "expected"),
+    [
+        pytest.param(
+            ALL_CODES,
+            "__ALL__",
+            id="everything-is-the-all-group",
+        ),
+        pytest.param(
+            ALL_CODES
+            - {
+                "ACTL001",
+                "ACTL002",
+            },
+            "__ALL__ except ACTL001, ACTL002",
+            id="minority-exclusion-renders-as-except",
+        ),
+        pytest.param(
+            frozenset(
+                {
+                    "ACTC004",
+                }
+            ),
+            "ACTC004",
+            id="minority-inclusion-renders-as-list",
+        ),
+    ],
+)
+def test_selection_description(enabled: frozenset[RuleCode], expected: str) -> None:
+    assert describe_selection(enabled) == expected
+
+
 @pytest.mark.integration
 def test_config_file_lists_are_loaded(tmp_path: Path) -> None:
     (tmp_path / "well-actually.toml").write_text(
@@ -190,23 +227,26 @@ def test_config_file_lists_are_loaded(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    assert load_selection(tmp_path, (), ()) == {
+    loaded = load_selection(tmp_path, (), ())
+
+    assert loaded.enabled == {
         "ACTC004",
     }
+    assert loaded.config_file_found
 
 
 @pytest.mark.integration
-def test_config_file_is_discovered_walking_up(tmp_path: Path) -> None:
+def test_parent_directory_config_is_not_sourced(tmp_path: Path) -> None:
     (tmp_path / "well-actually.toml").write_text(
         'exclude = ["ACTL"]\n', encoding="utf-8"
     )
     nested = tmp_path / "src" / "pkg"
     nested.mkdir(parents=True)
 
-    assert load_selection(nested, (), ()) == ALL_CODES - {
-        "ACTL001",
-        "ACTL002",
-    }
+    loaded = load_selection(nested, (), ())
+
+    assert loaded.enabled == ALL_CODES
+    assert not loaded.config_file_found
 
 
 @pytest.mark.integration
@@ -215,7 +255,7 @@ def test_cli_lists_replace_config_lists(tmp_path: Path) -> None:
         'exclude = ["ACTL"]\n', encoding="utf-8"
     )
 
-    assert load_selection(tmp_path, (), ("ACTR",)) == ALL_CODES - {
+    assert load_selection(tmp_path, (), ("ACTR",)).enabled == ALL_CODES - {
         "ACTR001",
         "ACTR002",
     }
@@ -233,4 +273,7 @@ def test_unknown_config_key_is_a_hard_error(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_missing_config_file_selects_everything(tmp_path: Path) -> None:
-    assert load_selection(tmp_path, (), ()) == ALL_CODES
+    loaded = load_selection(tmp_path, (), ())
+
+    assert loaded.enabled == ALL_CODES
+    assert not loaded.config_file_found

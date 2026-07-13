@@ -3,10 +3,16 @@ from pathlib import Path
 import rich_click as click
 
 from actually.checks import find_violations
-from actually.config import SelectionError, load_selection
+from actually.config import (
+    CONFIG_FILE_NAME,
+    LoadedSelection,
+    SelectionError,
+    describe_selection,
+    load_selection,
+)
 from actually.discovery import python_files
 from actually.formatting import format_source
-from actually.violations import RuleCode
+from actually.violations import ALL_GROUP, RuleCode
 
 
 @click.group(
@@ -87,9 +93,30 @@ def _selection(
     exclude_entries: tuple[str, ...],
 ) -> frozenset[RuleCode]:
     try:
-        return load_selection(Path.cwd(), include_entries, exclude_entries)
+        loaded = load_selection(Path.cwd(), include_entries, exclude_entries)
     except SelectionError as error:
         raise click.UsageError(str(error)) from error
+
+    _declare(loaded)
+
+    return loaded.enabled
+
+
+def _declare(loaded: LoadedSelection) -> None:
+    description = describe_selection(loaded.enabled)
+    if loaded.config_file_found:
+        click.echo(f"Found {CONFIG_FILE_NAME}. Running with: {description}", err=True)
+
+        return
+
+    if description == ALL_GROUP:
+        click.echo(
+            f"No {CONFIG_FILE_NAME} found, running with default '{ALL_GROUP}'", err=True
+        )
+
+        return
+
+    click.echo(f"No {CONFIG_FILE_NAME} found, running with: {description}", err=True)
 
 
 def _report_files(

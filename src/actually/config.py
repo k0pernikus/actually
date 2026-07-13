@@ -1,8 +1,10 @@
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
 from actually.violations import (
     ALL_GROUP,
+    ALL_RULE_CODES,
     RULE_SELECTOR_BY_VALUE,
     RULES,
     RuleCode,
@@ -22,16 +24,39 @@ class SelectionError(ValueError):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class LoadedSelection:
+    enabled: frozenset[RuleCode]
+    config_file_found: bool
+
+
 def load_selection(
-    start_dir: Path,
+    work_dir: Path,
     cli_include: tuple[str, ...],
     cli_exclude: tuple[str, ...],
-) -> frozenset[RuleCode]:
-    file_include, file_exclude = _config_file_lists(start_dir)
+) -> LoadedSelection:
+    candidate = work_dir / CONFIG_FILE_NAME
+    file_include, file_exclude = (
+        _parse_config(candidate) if candidate.is_file() else ((), ())
+    )
     include = cli_include if cli_include else file_include
     exclude = cli_exclude if cli_exclude else file_exclude
 
-    return resolve_selection(include, exclude)
+    return LoadedSelection(
+        enabled=resolve_selection(include, exclude),
+        config_file_found=candidate.is_file(),
+    )
+
+
+def describe_selection(enabled: frozenset[RuleCode]) -> str:
+    if enabled == ALL_RULE_CODES:
+        return ALL_GROUP
+
+    excluded = ALL_RULE_CODES - enabled
+    if len(excluded) < len(enabled):
+        return f"{ALL_GROUP} except {', '.join(sorted(excluded))}"
+
+    return ", ".join(sorted(enabled))
 
 
 def resolve_selection(
@@ -111,15 +136,6 @@ def _entry_match_length(code: RuleCode, entry: RuleSelector) -> int:
         return len(entry)
 
     return -1
-
-
-def _config_file_lists(start_dir: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    for directory in (start_dir, *start_dir.resolve().parents):
-        candidate = directory / CONFIG_FILE_NAME
-        if candidate.is_file():
-            return _parse_config(candidate)
-
-    return ((), ())
 
 
 def _parse_config(path: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
