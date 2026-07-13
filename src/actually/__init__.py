@@ -3,6 +3,13 @@ from actually.config import SelectionError, load_selection, resolve_selection
 from actually.discovery import python_files
 from actually.formatting import format_source
 from actually.literals import LiteralLayoutGap, literal_layout_gaps
+from actually.metadata import (
+    RetiredRuleMetadata,
+    RuleCatalog,
+    RuleMetadata,
+    load_rule_catalog,
+    rule_docs_url,
+)
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 from actually.violations import (
     ALL_GROUP,
@@ -26,7 +33,10 @@ __all__ = [
     "RULE_GROUP_BY_PREFIX",
     "AllGroup",
     "LiteralLayoutGap",
+    "RetiredRuleMetadata",
     "ReturnSpacingGap",
+    "RuleCatalog",
+    "RuleMetadata",
     "Rule",
     "RuleCode",
     "RuleGroup",
@@ -38,8 +48,10 @@ __all__ = [
     "find_violations",
     "format_source",
     "literal_layout_gaps",
+    "load_rule_catalog",
     "load_selection",
     "python_files",
     "resolve_selection",
     "return_spacing_gaps",
+    "rule_docs_url",
 ]

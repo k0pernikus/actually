@@ -15,9 +15,10 @@
 
 ## Decision
 
-- `rules.toml` is the single source of rule metadata: per rule a `[[rules]]` table with
-  `code`, `name`, `group`, `status`, `summary`, `rationale`, a `banned` and a `wanted` example,
-  and optionally `fix`
+- `src/actually/rules.toml` is the single source of rule metadata, packaged with the library
+  so the CLI (`actually rules --list`) reads the same source at runtime through
+  `actually.metadata`: per rule a `[[rules]]` table with `code`, `name`, `group`, `status`,
+  `summary`, `rationale`, a `banned` and a `wanted` example, and optionally `fix`
 - `status` is exactly one of `unstable`, `stable`, `removed`; a removed rule keeps its row
   (codes are never recycled, per ADR 1) carrying only `code`, `name`, `group`, `status`
 - every rule is checkable by definition; `fix` declares what `format` can rewrite — `full`,

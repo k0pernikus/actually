@@ -39,7 +39,8 @@ hooks {
           List(
             "README.md",
             "README.template.md",
-            "rules.toml",
+            "src/actually/rules.toml",
+            "src/actually/metadata.py",
             "rules/**/*.md",
             "scripts/generate_docs.py",
           )

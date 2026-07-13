@@ -8,8 +8,9 @@ ruff-style stable codes, grouped by language construct
 ([ADR 1](docs/decisions/1_ruff_style_rule_codes_in_named_groups.md)). Every rule is checkable;
 the auto-fix column marks what `format` can rewrite. Each rule links to its documentation page
 with rationale and a banned/wanted example pair — generated from
-[`rules.toml`](rules.toml) and validated by the linter itself
-([ADR 2](docs/decisions/2_rule_docs_generated_from_rules_toml.md)):
+[`rules.toml`](src/actually/rules.toml) and validated by the linter itself
+([ADR 2](docs/decisions/2_rule_docs_generated_from_rules_toml.md)). `actually rules --list`
+prints the same catalog in the terminal, docs links included:
 
 {{rules_tables}}
 
@@ -120,6 +121,6 @@ hk install
 uv run pytest
 ```
 
-`README.md` and `rules/*.md` are generated from `README.template.md` and `rules.toml` by
-`scripts/generate_docs.py`; an hk pre-commit hook regenerates and stages them. Edit the
-sources, never the outputs.
+`README.md` and `rules/*.md` are generated from `README.template.md` and
+`src/actually/rules.toml` by `scripts/generate_docs.py`; an hk pre-commit hook regenerates
+and stages them. Edit the sources, never the outputs.

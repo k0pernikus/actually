@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import rich_click as click
+from rich.console import Console
+from rich.table import Table
 
 from actually.checks import find_violations
 from actually.config import (
@@ -12,15 +14,118 @@ from actually.config import (
 )
 from actually.discovery import python_files
 from actually.formatting import format_source
+from actually.metadata import (
+    FIX_LABELS,
+    RuleCatalog,
+    RuleMetadata,
+    load_rule_catalog,
+    rule_docs_url,
+)
 from actually.violations import ALL_GROUP, RuleCode
+
+click.rich_click.COMMAND_GROUPS = {
+    "*": [
+        {
+            "name": "Linting",
+            "commands": [
+                "check",
+                "format",
+            ],
+        },
+        {
+            "name": "Rules",
+            "commands": [
+                "rules",
+            ],
+        },
+    ],
+}
 
 
 @click.group(
-    help="Well, actually — an opinionated Python linter: no else, no elif, flat ternaries only, breathing room around return."
+    help="Well, actually — an opinionated Python linter: no else, no elif, flat ternaries only, breathing room around return.",
+    context_settings={
+        "help_option_names": [
+            "-h",
+            "--help",
+        ],
+    },
 )
 @click.version_option(package_name="well-actually")
 def main() -> None:
     pass
+
+
+@main.command(
+    name="rules",
+    help="Inspect the rule set.",
+)
+@click.option(
+    "--list",
+    "list_rules",
+    is_flag=True,
+    help="List every rule: one table per group with code, name, summary, auto-fix, and docs link.",
+)
+@click.pass_context
+def rules_command(ctx: click.Context, list_rules: bool) -> None:
+    if not list_rules:
+        click.echo(ctx.get_help())
+
+        return
+
+    console = Console()
+    catalog = load_rule_catalog()
+    for table in _rule_tables(catalog):
+        console.print(table)
+
+
+def _rule_tables(catalog: RuleCatalog) -> tuple[Table, ...]:
+    groups = sorted({rule.group for rule in catalog.active})
+
+    return tuple(
+        _group_table(
+            group,
+            tuple(rule for rule in catalog.active if rule.group == group),
+        )
+        for group in groups
+    )
+
+
+def _group_table(group: str, rules: tuple[RuleMetadata, ...]) -> Table:
+    table = Table(
+        title=group,
+        title_style="bold",
+        header_style="bold",
+    )
+    table.add_column("Code", style="bold cyan", no_wrap=True)
+    table.add_column("Rule", style="magenta", no_wrap=True)
+    table.add_column("Enforces")
+    table.add_column("Auto-fix", no_wrap=True)
+    table.add_column("Docs", style="dim", overflow="fold")
+    for rule in sorted(rules, key=_rule_sort_key):
+        table.add_row(
+            rule.code,
+            rule.name,
+            rule.summary,
+            _fix_cell(rule),
+            rule_docs_url(rule.name),
+        )
+
+    return table
+
+
+def _rule_sort_key(rule: RuleMetadata) -> str:
+    return rule.code
+
+
+def _fix_cell(rule: RuleMetadata) -> str:
+    styles = {
+        "full": "green",
+        "partial": "yellow",
+        "check-only": "default",
+    }
+
+    return f"[{styles[rule.fix]}]{FIX_LABELS[rule.fix]}[/]"
 
 
 @main.command(
