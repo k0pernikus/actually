@@ -32,56 +32,90 @@ def test_inserts_blank_line_above_return() -> None:
     )
 
 
-def test_dedents_try_else_when_every_except_exits() -> None:
-    source = (
-        "def f():\n"
-        "    try:\n"
-        "        value = risky()\n"
-        "    except ValueError:\n"
-        "        return 0\n"
-        "    else:\n"
-        "        return value\n"
-    )
-
-    assert format_source(source) == (
-        "def f():\n"
-        "    try:\n"
-        "        value = risky()\n"
-        "    except ValueError:\n"
-        "        return 0\n"
-        "\n"
-        "    return value\n"
-    )
-
-
-def test_try_else_with_fall_through_except_is_not_rewritten() -> None:
-    source = (
-        "def f():\n"
-        "    try:\n"
-        "        value = risky()\n"
-        "    except ValueError:\n"
-        "        value = 0\n"
-        "    else:\n"
-        "        log(value)\n"
-    )
-
-    assert format_source(source) == source
-
-
-def test_try_else_with_finally_is_not_rewritten() -> None:
-    source = (
-        "def f():\n"
-        "    try:\n"
-        "        value = risky()\n"
-        "    except ValueError:\n"
-        "        raise\n"
-        "    else:\n"
-        "        log(value)\n"
-        "    finally:\n"
-        "        close()\n"
-    )
-
-    assert format_source(source) == source
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        pytest.param(
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        return 0\n"
+            "    else:\n"
+            "        return value\n",
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        return 0\n"
+            "\n"
+            "    return value\n",
+            id="every-except-exits-dedents",
+        ),
+        pytest.param(
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        value = 0\n"
+            "    else:\n"
+            "        log(value)\n",
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        value = 0\n"
+            "    else:\n"
+            "        log(value)\n",
+            id="fall-through-except-kept",
+        ),
+        pytest.param(
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        raise\n"
+            "    else:\n"
+            "        log(value)\n"
+            "    finally:\n"
+            "        close()\n",
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        raise\n"
+            "    else:\n"
+            "        log(value)\n"
+            "    finally:\n"
+            "        close()\n",
+            id="finally-clause-kept",
+        ),
+        pytest.param(
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        return 0\n"
+            "    else:\n"
+            '        text = """a\n'
+            'b"""\n'
+            "        return text\n",
+            "def f():\n"
+            "    try:\n"
+            "        value = risky()\n"
+            "    except ValueError:\n"
+            "        return 0\n"
+            "\n"
+            '    text = """a\n'
+            'b"""\n'
+            "\n"
+            "    return text\n",
+            id="string-lines-flatter-than-shift-preserved",
+        ),
+    ],
+)
+def test_try_else_clause_formatting(source: str, expected: str) -> None:
+    assert format_source(source) == expected
 
 
 def test_if_else_is_reported_not_rewritten() -> None:
@@ -90,57 +124,33 @@ def test_if_else_is_reported_not_rewritten() -> None:
     assert format_source(source) == source
 
 
-def test_dedent_preserves_string_lines_flatter_than_the_shift() -> None:
-    source = (
-        "def f():\n"
-        "    try:\n"
-        "        value = risky()\n"
-        "    except ValueError:\n"
-        "        return 0\n"
-        "    else:\n"
-        '        text = """a\n'
-        'b"""\n'
-        "        return text\n"
-    )
-
-    assert format_source(source) == (
-        "def f():\n"
-        "    try:\n"
-        "        value = risky()\n"
-        "    except ValueError:\n"
-        "        return 0\n"
-        "\n"
-        '    text = """a\n'
-        'b"""\n'
-        "\n"
-        "    return text\n"
-    )
-
-
-def test_trailing_comment_on_return_line_converges() -> None:
-    source = "def f():\n    return 1  # noqa: TID251\n"
-
-    assert format_source(source) == source
-
-
-def test_blank_below_lands_past_a_same_line_comment() -> None:
-    source = "def f(x):\n    if x:\n        return 1  # note\n    y = 2\n"
-
-    assert format_source(source) == (
-        "def f(x):\n    if x:\n        return 1  # note\n\n    y = 2\n"
-    )
-
-
-def test_same_line_preceding_statement_converges() -> None:
-    source = "def f():\n    y = 1; return y\n"
-
-    assert format_source(source) == source
-
-
-def test_blank_above_skips_same_line_sibling() -> None:
-    source = "def f():\n    x = 1\n    y = 2; return y\n"
-
-    assert format_source(source) == ("def f():\n    x = 1\n\n    y = 2; return y\n")
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        pytest.param(
+            "def f():\n    return 1  # noqa: TID251\n",
+            "def f():\n    return 1  # noqa: TID251\n",
+            id="trailing-comment-converges",
+        ),
+        pytest.param(
+            "def f(x):\n    if x:\n        return 1  # note\n    y = 2\n",
+            "def f(x):\n    if x:\n        return 1  # note\n\n    y = 2\n",
+            id="blank-below-lands-past-comment",
+        ),
+        pytest.param(
+            "def f():\n    y = 1; return y\n",
+            "def f():\n    y = 1; return y\n",
+            id="same-line-preceding-statement-converges",
+        ),
+        pytest.param(
+            "def f():\n    x = 1\n    y = 2; return y\n",
+            "def f():\n    x = 1\n\n    y = 2; return y\n",
+            id="blank-above-skips-same-line-sibling",
+        ),
+    ],
+)
+def test_same_line_sibling_return_spacing(source: str, expected: str) -> None:
+    assert format_source(source) == expected
 
 
 def test_format_is_idempotent() -> None:

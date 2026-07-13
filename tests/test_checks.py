@@ -60,25 +60,9 @@ def test_elif_is_flagged() -> None:
     ]
 
 
-def test_flat_ternary_is_clean() -> None:
-    assert outline("x = 1 if condition else 2\n") == []
-
-
 def test_nested_ternary_is_flagged() -> None:
     assert outline("x = (1 if a else 2) if b else 3\n") == [
         ("ACTC003", 1),
-    ]
-
-
-def test_ternary_with_none_arm_is_flagged() -> None:
-    assert outline("x = f(y) if y else None\n") == [
-        ("ACTC004", 1),
-    ]
-
-
-def test_none_yielding_assignment_ternary_is_flagged() -> None:
-    assert outline("parsed = None if raw is None else parse(raw)\n") == [
-        ("ACTC004", 1),
     ]
 
 
@@ -90,43 +74,68 @@ def test_ternary_with_empty_list_arm_is_flagged() -> None:
     ]
 
 
-def test_ternary_with_empty_string_arm_is_flagged() -> None:
-    assert outline('x = y if y else ""\n') == [
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param(
+            "x = 1 if condition else 2\n",
+            id="flat-ternary",
+        ),
+        pytest.param(
+            'action = "go_to_beach" if sunny else "stay_home"\n',
+            id="meaningful-string-arms",
+        ),
+        pytest.param(
+            'x = name if plain else f"{scope}::{short_name}"\n',
+            id="inline-literal-separator",
+        ),
+        pytest.param(
+            'x = name if plain else f"{scope}{SCOPE_SEPARATOR}{short_name}"\n',
+            id="constant-separator",
+        ),
+        pytest.param(
+            'x = name if plain else f"{scope}{name}"\n',
+            id="interpolation-only",
+        ),
+        pytest.param(
+            'x = fallback if missing else f"{name}"\n',
+            id="single-placeholder",
+        ),
+        pytest.param(
+            'x = y if c else "\\n"\n',
+            id="escape-only-string",
+        ),
+    ],
+)
+def test_valid_ternary_is_clean(source: str) -> None:
+    assert outline(source) == []
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param(
+            "x = f(y) if y else None\n",
+            id="none-arm",
+        ),
+        pytest.param(
+            "parsed = None if raw is None else parse(raw)\n",
+            id="none-yielding-assignment",
+        ),
+        pytest.param(
+            'x = y if y else ""\n',
+            id="empty-string-arm",
+        ),
+        pytest.param(
+            'x = y if c else f""\n',
+            id="empty-fstring-arm",
+        ),
+    ],
+)
+def test_degenerate_ternary_arm_is_flagged(source: str) -> None:
+    assert outline(source) == [
         ("ACTC004", 1),
     ]
-
-
-def test_ternary_with_two_meaningful_arms_is_clean() -> None:
-    assert outline('action = "go_to_beach" if sunny else "stay_home"\n') == []
-
-
-def test_fstring_arm_with_inline_literal_separator_is_not_degenerate() -> None:
-    assert outline('x = name if plain else f"{scope}::{short_name}"\n') == []
-
-
-def test_fstring_arm_with_constant_separator_is_not_degenerate() -> None:
-    assert (
-        outline('x = name if plain else f"{scope}{SCOPE_SEPARATOR}{short_name}"\n')
-        == []
-    )
-
-
-def test_interpolation_only_fstring_arm_is_not_degenerate() -> None:
-    assert outline('x = name if plain else f"{scope}{name}"\n') == []
-
-
-def test_single_interpolation_fstring_arm_is_not_degenerate() -> None:
-    assert outline('x = fallback if missing else f"{name}"\n') == []
-
-
-def test_empty_fstring_arm_is_degenerate() -> None:
-    assert outline('x = y if c else f""\n') == [
-        ("ACTC004", 1),
-    ]
-
-
-def test_escape_only_string_arm_is_not_degenerate() -> None:
-    assert outline('x = y if c else "\\n"\n') == []
 
 
 def test_scoped_label_parser_shape_is_clean() -> None:
@@ -160,19 +169,6 @@ def test_return_needs_blank_line_below_when_code_follows() -> None:
     ]
 
 
-def test_return_with_blank_line_below_is_clean() -> None:
-    source = (
-        "def f(foo, bar, baz):\n"
-        "    if foo:\n"
-        "        return foo\n"
-        "\n"
-        "    if bar:\n"
-        "        return baz\n"
-    )
-
-    assert outline(source) == []
-
-
 def test_return_needs_blank_line_above_in_larger_block() -> None:
     source = "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n"
 
@@ -181,25 +177,30 @@ def test_return_needs_blank_line_above_in_larger_block() -> None:
     ]
 
 
-def test_return_with_blank_line_above_is_clean() -> None:
-    source = "def f(baz):\n    if baz:\n        foo = 42 + 1337\n\n        return foo\n"
-
-    assert outline(source) == []
-
-
-def test_return_ending_a_function_needs_no_blank_below() -> None:
-    source = "def f():\n    return 1\nx = 2\n"
-
-    assert outline(source) == []
-
-
-def test_trailing_comment_on_return_line_is_clean() -> None:
-    assert outline("def f():\n    return 1  # noqa\n") == []
-
-
-def test_return_directly_before_except_clause_is_exempt() -> None:
-    source = (
-        "def f():\n    try:\n        return 1\n    except ValueError:\n        raise\n"
-    )
-
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param(
+            "def f(foo, bar, baz):\n    if foo:\n        return foo\n\n    if bar:\n        return baz\n",
+            id="blank-line-below-present",
+        ),
+        pytest.param(
+            "def f(baz):\n    if baz:\n        foo = 42 + 1337\n\n        return foo\n",
+            id="blank-line-above-present",
+        ),
+        pytest.param(
+            "def f():\n    return 1\nx = 2\n",
+            id="return-ends-function",
+        ),
+        pytest.param(
+            "def f():\n    return 1  # noqa\n",
+            id="trailing-comment-on-return",
+        ),
+        pytest.param(
+            "def f():\n    try:\n        return 1\n    except ValueError:\n        raise\n",
+            id="return-before-except-clause",
+        ),
+    ],
+)
+def test_compliant_return_layout_is_clean(source: str) -> None:
     assert outline(source) == []
