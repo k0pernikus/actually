@@ -100,6 +100,17 @@ def test_ternary_with_two_meaningful_arms_is_clean() -> None:
     assert outline('action = "go_to_beach" if sunny else "stay_home"\n') == []
 
 
+def test_fstring_arm_with_inline_literal_separator_is_not_degenerate() -> None:
+    assert outline('x = name if plain else f"{scope}::{short_name}"\n') == []
+
+
+def test_fstring_arm_with_constant_separator_is_not_degenerate() -> None:
+    assert (
+        outline('x = name if plain else f"{scope}{SCOPE_SEPARATOR}{short_name}"\n')
+        == []
+    )
+
+
 def test_interpolation_only_fstring_arm_is_not_degenerate() -> None:
     assert outline('x = name if plain else f"{scope}{name}"\n') == []
 
