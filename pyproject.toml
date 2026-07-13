@@ -40,7 +40,6 @@ module-name = "actually"
 dev = [
   "commitizen>=4.16.4",
   "pytest>=9.1.1",
-  "pytest-xdist>=3.8.0",
   "ruff>=0.15.21",
   "taplo>=0.9.3",
   "ty>=0.0.59",
