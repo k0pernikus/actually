@@ -48,6 +48,27 @@ hooks {
       }
     }
   }
+  ["post-checkout"] {
+    steps {
+      ["pin-generated-readonly"] {
+        check = "uv run --no-project python scripts/pin_generated_readonly.py"
+      }
+    }
+  }
+  ["post-merge"] {
+    steps {
+      ["pin-generated-readonly"] {
+        check = "uv run --no-project python scripts/pin_generated_readonly.py"
+      }
+    }
+  }
+  ["post-rewrite"] {
+    steps {
+      ["pin-generated-readonly"] {
+        check = "uv run --no-project python scripts/pin_generated_readonly.py"
+      }
+    }
+  }
   ["pre-push"] {
     steps {
       ["docs-in-sync"] {

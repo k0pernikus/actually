@@ -33,8 +33,10 @@
   check and an integration test (`--check`) gate freshness in CI
 - the generator leaves every output chmod `444` and toggles write access only while writing —
   a hand edit hits a read-only file first; the mode is per-checkout state (git does not track
-  it), re-applied whenever the generator runs, and `--check` deliberately ignores it so a fresh
-  clone passes CI
+  it, and recreates touched files writable), so post-checkout / post-merge / post-rewrite hooks
+  re-pin it via the stdlib-only `scripts/pin_generated_readonly.py` (no venv needed on a fresh
+  clone), and `--check` deliberately ignores the mode so a fresh clone passes CI before any
+  hook ran
 
 ## Consequences
 
