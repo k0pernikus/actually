@@ -118,6 +118,23 @@ def test_escape_only_string_arm_is_not_degenerate() -> None:
     assert outline('x = y if c else "\\n"\n') == []
 
 
+def test_scoped_label_parser_shape_is_clean() -> None:
+    source = (
+        'SCOPE_SEPARATOR = "::"\n'
+        "\n"
+        "\n"
+        "def _parse_label_def(value: object, scope: str | None, context: str) -> LabelDef:\n"
+        "    table = _require_mapping(value, context)\n"
+        '    short_name = _require_str(table.get("name"), f"{context}.name")\n'
+        '    description = _require_str(table.get("description", ""), f"{context}.description")\n'
+        '    name = short_name if scope is None else f"{scope}{SCOPE_SEPARATOR}{short_name}"\n'
+        "\n"
+        "    return LabelDef(name=name, description=description)\n"
+    )
+
+    assert outline(source) == []
+
+
 def test_return_needs_blank_line_below_when_code_follows() -> None:
     source = (
         "def f(foo, bar, baz):\n"
