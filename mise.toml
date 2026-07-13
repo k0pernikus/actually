@@ -13,6 +13,25 @@ uv = "latest"
 description = "bump version via commitizen and push the release tag"
 run = ["uv run cz bump", "git push --follow-tags"]
 
+[tasks.format]
+description = "apply every fixer to the tree: actually, ruff check --fix, ruff format, taplo"
+run = [
+  "uv run actually format .",
+  "uv run ruff check --fix .",
+  "uv run ruff format .",
+  "uv run taplo format",
+]
+
+[tasks.lint]
+description = "read-only full gate: ruff format --check, ruff check, actually check, ty, docs freshness"
+run = [
+  "uv run ruff format --check .",
+  "uv run ruff check .",
+  "uv run actually check .",
+  "uv run ty check src tests scripts",
+  "uv run python scripts/generate_docs.py --check",
+]
+
 [tasks.test]
 description = "run the full test suite"
 run = "uv run pytest"
