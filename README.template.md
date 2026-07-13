@@ -21,11 +21,14 @@ prints the same catalog in the terminal, docs links included:
 them first. Our recommended configurations are this repo's own [`ruff.toml`](ruff.toml) and
 [`ty.toml`](ty.toml). `actually`'s opinionation starts where those stop, and it MANDATES
 compatibility of its own output: no `actually` rule demands, and no `actually format` fix
-produces, code those rule sets reject — after `actually format`, a `ruff format` under the
-recommended configuration is a no-op. `well-actually` never runs ruff or ty itself — it is
-its own tool with neither as a dependency; pair them in your own pipeline. This repo gates
-itself on both toolchains plus its own linter on every commit, which is the guarantee
-exercised live.
+produces, code those rule sets reject — after `actually format`, a `ruff check` under the
+recommended configuration is a no-op. `ruff format` is not guaranteed one: an inserted
+trailing comma is exactly the magic trailing comma ruff format expands, so a literal
+`actually` fixed without exploding still reformats. Run `actually format` before
+`ruff format` and let ruff own the final layout. `well-actually` never runs ruff or ty
+itself — it is its own tool with neither as a dependency; pair them in your own pipeline,
+in that order. This repo gates itself on both toolchains plus its own linter on every
+commit, which is the guarantee exercised live.
 
 ## Usage
 
