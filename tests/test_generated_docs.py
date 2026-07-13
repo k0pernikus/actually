@@ -10,7 +10,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 def test_generated_docs_are_fresh() -> None:
     completed = subprocess.run(
-        ["uv", "run", "python", "scripts/generate_docs.py", "--check"],
+        [
+            "uv",
+            "run",
+            "python",
+            "scripts/generate_docs.py",
+            "--check",
+        ],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,

@@ -18,8 +18,19 @@ PLACEHOLDER = "{{rules_table}}"
 ActiveStatus = Literal["stable", "unstable"]
 FixCapability = Literal["check-only", "full", "partial"]
 
-STATUS_VALUES = frozenset({"removed", "stable", "unstable"})
-DECLARABLE_FIX_VALUES = frozenset({"full", "partial"})
+STATUS_VALUES = frozenset(
+    {
+        "removed",
+        "stable",
+        "unstable",
+    }
+)
+DECLARABLE_FIX_VALUES = frozenset(
+    {
+        "full",
+        "partial",
+    }
+)
 ACTIVE_RULE_KEYS = frozenset(
     {
         "banned",
@@ -33,7 +44,14 @@ ACTIVE_RULE_KEYS = frozenset(
         "wanted",
     }
 )
-RETIRED_RULE_KEYS = frozenset({"code", "group", "name", "status"})
+RETIRED_RULE_KEYS = frozenset(
+    {
+        "code",
+        "group",
+        "name",
+        "status",
+    }
+)
 
 FIX_LABELS = {
     "check-only": "no",
@@ -114,10 +132,18 @@ def _load_rules() -> tuple[tuple[ActiveRule, ...], tuple[RetiredRule, ...]]:
         active.append(_active_rule(entry, status))
 
     _reject_duplicates(
-        [*(rule.code for rule in active), *(rule.code for rule in retired)], "code"
+        [
+            *(rule.code for rule in active),
+            *(rule.code for rule in retired),
+        ],
+        "code",
     )
     _reject_duplicates(
-        [*(rule.name for rule in active), *(rule.name for rule in retired)], "name"
+        [
+            *(rule.name for rule in active),
+            *(rule.name for rule in retired),
+        ],
+        "name",
     )
 
     return (tuple(active), tuple(retired))
@@ -266,7 +292,12 @@ def _render_rules_table(
             f"{rule.code} ({rule.name})"
             for rule in sorted(retired, key=lambda rule: rule.code)
         )
-        lines.extend(["", f"Retired codes, never recycled: {names}."])
+        lines.extend(
+            [
+                "",
+                f"Retired codes, never recycled: {names}.",
+            ]
+        )
 
     return "\n".join(lines)
 

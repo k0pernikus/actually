@@ -14,7 +14,9 @@ def outline(source: str) -> list[tuple[str, int]]:
 def test_else_on_if_is_flagged() -> None:
     source = "def f(x):\n    if x:\n        return 1\n    else:\n        return 2\n"
 
-    assert outline(source) == [("ACTC001", 4)]
+    assert outline(source) == [
+        ("ACTC001", 4),
+    ]
 
 
 def test_else_on_try_names_the_construct() -> None:
@@ -30,14 +32,18 @@ def test_else_on_try_names_the_construct() -> None:
 
     violations = find_violations(source)
 
-    assert outline(source) == [("ACTC001", 6)]
+    assert outline(source) == [
+        ("ACTC001", 6),
+    ]
     assert "`try`" in violations[0].message
 
 
 def test_completion_else_on_for_is_flagged() -> None:
     source = "for i in range(3):\n    use(i)\nelse:\n    done()\n"
 
-    assert outline(source) == [("ACTC001", 3)]
+    assert outline(source) == [
+        ("ACTC001", 3),
+    ]
 
 
 def test_elif_is_flagged() -> None:
@@ -49,7 +55,9 @@ def test_elif_is_flagged() -> None:
         "        return 2\n"
     )
 
-    assert outline(source) == [("ACTC002", 4)]
+    assert outline(source) == [
+        ("ACTC002", 4),
+    ]
 
 
 def test_flat_ternary_is_clean() -> None:
@@ -57,23 +65,35 @@ def test_flat_ternary_is_clean() -> None:
 
 
 def test_nested_ternary_is_flagged() -> None:
-    assert outline("x = (1 if a else 2) if b else 3\n") == [("ACTC003", 1)]
+    assert outline("x = (1 if a else 2) if b else 3\n") == [
+        ("ACTC003", 1),
+    ]
 
 
 def test_ternary_with_none_arm_is_flagged() -> None:
-    assert outline("x = f(y) if y else None\n") == [("ACTC004", 1)]
+    assert outline("x = f(y) if y else None\n") == [
+        ("ACTC004", 1),
+    ]
 
 
 def test_none_yielding_assignment_ternary_is_flagged() -> None:
-    assert outline("parsed = None if raw is None else parse(raw)\n") == [("ACTC004", 1)]
+    assert outline("parsed = None if raw is None else parse(raw)\n") == [
+        ("ACTC004", 1),
+    ]
 
 
 def test_ternary_with_empty_list_arm_is_flagged() -> None:
-    assert outline("x = [y] if y else []\n") == [("ACTC004", 1)]
+    assert outline("x = [y] if y else []\n") == [
+        ("ACTC004", 1),
+        ("ACTL001", 1),
+        ("ACTL002", 1),
+    ]
 
 
 def test_ternary_with_empty_string_arm_is_flagged() -> None:
-    assert outline('x = y if y else ""\n') == [("ACTC004", 1)]
+    assert outline('x = y if y else ""\n') == [
+        ("ACTC004", 1),
+    ]
 
 
 def test_ternary_with_two_meaningful_arms_is_clean() -> None:
@@ -89,7 +109,9 @@ def test_return_needs_blank_line_below_when_code_follows() -> None:
         "        return baz\n"
     )
 
-    assert outline(source) == [("ACTR002", 3)]
+    assert outline(source) == [
+        ("ACTR002", 3),
+    ]
 
 
 def test_return_with_blank_line_below_is_clean() -> None:
@@ -108,7 +130,9 @@ def test_return_with_blank_line_below_is_clean() -> None:
 def test_return_needs_blank_line_above_in_larger_block() -> None:
     source = "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n"
 
-    assert outline(source) == [("ACTR001", 4)]
+    assert outline(source) == [
+        ("ACTR001", 4),
+    ]
 
 
 def test_return_with_blank_line_above_is_clean() -> None:

@@ -1,5 +1,11 @@
 from ast_grep_py import SgNode, SgRoot
 
+from actually.literals import (
+    canonicalizable_literals,
+    explode_collection_literals,
+    insert_commas,
+    missing_comma_insertions,
+)
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 
 TERMINATING_KINDS = frozenset(
@@ -15,9 +21,27 @@ MAX_PASSES = 100
 
 
 def format_source(source: str) -> str:
-    dedented = _fix_try_else_clauses(source)
+    canonical_literals = _fix_literal_layout(source)
+    dedented = _fix_try_else_clauses(canonical_literals)
 
     return _fix_return_spacing(dedented)
+
+
+def _fix_literal_layout(source: str) -> str:
+    current = source
+    for _ in range(MAX_PASSES):
+        explodable = canonicalizable_literals(current)
+        if explodable:
+            current = explode_collection_literals(current, explodable)
+            continue
+
+        insertions = missing_comma_insertions(current)
+        if not insertions:
+            return current
+
+        current = insert_commas(current, insertions)
+
+    raise RuntimeError("literal layout fixes did not converge")
 
 
 def _fix_try_else_clauses(source: str) -> str:

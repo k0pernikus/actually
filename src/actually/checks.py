@@ -1,13 +1,16 @@
 from ast_grep_py import SgNode, SgRoot
 
+from actually.literals import LiteralLayoutGap, literal_layout_gaps
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 from actually.violations import (
     BLANK_AFTER_RETURN,
     BLANK_BEFORE_RETURN,
     NO_ELIF,
     NO_ELSE,
+    ONE_ELEMENT_PER_LINE,
     TERNARY_NOT_EMPTY,
     TERNARY_NOT_NESTED,
+    TRAILING_COMMA,
     Violation,
 )
 
@@ -34,6 +37,7 @@ def find_violations(source: str) -> tuple[Violation, ...]:
         *_elif_violations(root),
         *_nested_ternary_violations(root),
         *_degenerate_ternary_violations(root),
+        *_literal_layout_violations(source),
         *_return_spacing_violations(source),
     )
 
@@ -85,6 +89,25 @@ def _degenerate_ternary_violations(root: SgNode) -> tuple[Violation, ...]:
         )
         for ternary in root.find_all(kind="conditional_expression")
         if _has_degenerate_arm(ternary)
+    )
+
+
+def _literal_layout_violations(source: str) -> tuple[Violation, ...]:
+    return tuple(_literal_violation(gap) for gap in literal_layout_gaps(source))
+
+
+def _literal_violation(gap: LiteralLayoutGap) -> Violation:
+    if gap.kind == "missing-trailing-comma":
+        return Violation(
+            rule=TRAILING_COMMA,
+            line=gap.literal_start_line + 1,
+            message="missing trailing comma after the last element",
+        )
+
+    return Violation(
+        rule=ONE_ELEMENT_PER_LINE,
+        line=gap.literal_start_line + 1,
+        message="collection literal not one element per line with brackets on their own lines",
     )
 
 

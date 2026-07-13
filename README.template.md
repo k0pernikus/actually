@@ -45,6 +45,8 @@ explicitly is always linted.
 - dedents a `try/except/else` completion clause into straight-line code when every `except`
   body already exits (`return`, `raise`, `continue`, `break`) — when one falls through, the
   rewrite would change behaviour, so it is reported for human refactoring instead
+- rewrites dict/list/set literals to one element per line with a trailing comma — literals
+  carrying comments or multiline elements are reported for human formatting instead
 - `--only-autofixable` makes it best effort: every available fix is applied, the remaining
   violations are still reported, and the exit code stays 0
 

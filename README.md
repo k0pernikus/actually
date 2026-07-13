@@ -17,6 +17,8 @@ with rationale and a banned/wanted example pair — generated from
 | ACTC002 | [no-elif](rules/no-elif.md) | stable | no | `elif` — use guard clauses or a dispatch table |
 | ACTC003 | [ternary-not-nested](rules/ternary-not-nested.md) | stable | no | a ternary inside another ternary's arm (`elif` in expression form) |
 | ACTC004 | [ternary-not-empty](rules/ternary-not-empty.md) | unstable | no | a degenerate ternary arm (`None`, `""`, empty container) — conditional inclusion in disguise |
+| ACTL001 | [trailing-comma](rules/trailing-comma.md) | unstable | yes | a dict/list/set literal whose last element lacks a trailing comma |
+| ACTL002 | [one-element-per-line](rules/one-element-per-line.md) | unstable | partial | a dict/list/set literal with elements sharing a line with a bracket or each other |
 | ACTR001 | [blank-before-return](rules/blank-before-return.md) | stable | yes | a `return` stacked directly under other statements in its block |
 | ACTR002 | [blank-after-return](rules/blank-after-return.md) | stable | yes | code directly under a `return` line |
 
@@ -52,6 +54,8 @@ explicitly is always linted.
 - dedents a `try/except/else` completion clause into straight-line code when every `except`
   body already exits (`return`, `raise`, `continue`, `break`) — when one falls through, the
   rewrite would change behaviour, so it is reported for human refactoring instead
+- rewrites dict/list/set literals to one element per line with a trailing comma — literals
+  carrying comments or multiline elements are reported for human formatting instead
 - `--only-autofixable` makes it best effort: every available fix is applied, the remaining
   violations are still reported, and the exit code stays 0
 

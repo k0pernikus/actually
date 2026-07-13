@@ -31,10 +31,12 @@
 | ACTC002 | no-elif | actually-conditionals |
 | ACTC003 | ternary-not-nested | actually-conditionals |
 | ACTC004 | ternary-not-empty | actually-conditionals |
+| ACTL001 | trailing-comma | actually-literals |
+| ACTL002 | one-element-per-line | actually-literals |
 | ACTR001 | blank-before-return | actually-returns |
 | ACTR002 | blank-after-return | actually-returns |
 
-Reserved group letters: `C` (conditionals), `R` (returns).
+Reserved group letters: `C` (conditionals), `L` (literals), `R` (returns).
 
 ### Rule semantics
 

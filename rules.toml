@@ -107,6 +107,56 @@ def parsed(raw):
 '''
 
 [[rules]]
+code = "ACTL001"
+name = "trailing-comma"
+group = "actually-literals"
+status = "unstable"
+fix = "full"
+summary = "a dict/list/set literal whose last element lacks a trailing comma"
+rationale = '''
+Appending, removing, or reordering an element should touch exactly one line — without the
+trailing comma the previous last element changes too, polluting every diff. The comma is also
+the magic trailing comma that formatters (ruff, black) respect, pinning the multiline layout
+instead of collapsing it back to one line.
+'''
+banned = '''
+labels = {
+    200: "ok",
+    404: "missing"
+}
+'''
+wanted = '''
+labels = {
+    200: "ok",
+    404: "missing",
+}
+'''
+
+[[rules]]
+code = "ACTL002"
+name = "one-element-per-line"
+group = "actually-literals"
+status = "unstable"
+fix = "partial"
+summary = "a dict/list/set literal with elements sharing a line with a bracket or each other"
+rationale = '''
+Json-like structures read as records: one element per line with the brackets on their own
+lines makes membership scannable and keeps every future diff to the single line it concerns.
+The fix rewrites the literal in place; a literal carrying comments or multiline elements is
+reported for human formatting instead. Tuples are exempt — they appear in subscripts and type
+expressions where this layout is not wanted.
+'''
+banned = '''
+point = {"x": 1, "y": 2}
+'''
+wanted = '''
+point = {
+    "x": 1,
+    "y": 2,
+}
+'''
+
+[[rules]]
 code = "ACTR001"
 name = "blank-before-return"
 group = "actually-returns"
