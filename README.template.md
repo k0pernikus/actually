@@ -50,6 +50,38 @@ explicitly is always linted.
 - `--only-autofixable` makes it best effort: every available fix is applied, the remaining
   violations are still reported, and the exit code stays 0
 
+## Configuration
+
+Select the rule subset in a `well-actually.toml` (discovered by walking up from the working
+directory) or with repeatable `--include` / `--exclude` options, which override the file's
+corresponding list ([ADR 5](docs/decisions/5_rule_selection_by_prefix_specificity.md)).
+Entries are rule codes (`ACTC004`), code prefixes (`ACTC` — a group, `ACT` — everything), or
+the `__ALL__` sentinel. The longest match per rule wins; ties go to `exclude`. `include`
+defaults to `__ALL__`, so exclude-only configs just work:
+
+```toml
+exclude = ["ACTL"]
+```
+
+Any subset is expressible — one rule only:
+
+```toml
+exclude = ["__ALL__"]
+include = ["ACTC004"]
+```
+
+or a group off with one member kept:
+
+```toml
+exclude = ["ACTL"]
+include = ["__ALL__", "ACTL001"]
+```
+
+Hard errors instead of silent tolerance: an unknown selector, `__ALL__` appearing more than
+once across both lists, `exclude = ["__ALL__"]` without any include entry, and a selection
+that enables no rules. `format` obeys the selection — a disabled rule neither reports nor
+fixes.
+
 ## Example
 
 ```python

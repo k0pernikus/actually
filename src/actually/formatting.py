@@ -7,6 +7,15 @@ from actually.literals import (
     missing_comma_insertions,
 )
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
+from actually.violations import (
+    ALL_RULE_CODES,
+    BLANK_AFTER_RETURN,
+    BLANK_BEFORE_RETURN,
+    NO_ELSE,
+    ONE_ELEMENT_PER_LINE,
+    TRAILING_COMMA,
+    RuleCode,
+)
 
 TERMINATING_KINDS = frozenset(
     {
@@ -17,29 +26,41 @@ TERMINATING_KINDS = frozenset(
     },
 )
 
+SPACING_RULE_CODE_BY_SIDE = {
+    "above": BLANK_BEFORE_RETURN.code,
+    "below": BLANK_AFTER_RETURN.code,
+}
+
 MAX_PASSES = 100
 
 
-def format_source(source: str) -> str:
-    canonical_literals = _fix_literal_layout(source)
-    dedented = _fix_try_else_clauses(canonical_literals)
+def format_source(
+    source: str,
+    enabled: frozenset[RuleCode] = ALL_RULE_CODES,
+) -> str:
+    current = _fix_literal_layout(source, enabled)
+    if NO_ELSE.code in enabled:
+        current = _fix_try_else_clauses(current)
 
-    return _fix_return_spacing(dedented)
+    return _fix_return_spacing(current, enabled)
 
 
-def _fix_literal_layout(source: str) -> str:
+def _fix_literal_layout(source: str, enabled: frozenset[RuleCode]) -> str:
     current = source
     for _ in range(MAX_PASSES):
-        explodable = canonicalizable_literals(current)
-        if explodable:
-            current = explode_collection_literals(current, explodable)
-            continue
+        if ONE_ELEMENT_PER_LINE.code in enabled:
+            explodable = canonicalizable_literals(current)
+            if explodable:
+                current = explode_collection_literals(current, explodable)
+                continue
 
-        insertions = missing_comma_insertions(current)
-        if not insertions:
-            return current
+        if TRAILING_COMMA.code in enabled:
+            insertions = missing_comma_insertions(current)
+            if insertions:
+                current = insert_commas(current, insertions)
+                continue
 
-        current = insert_commas(current, insertions)
+        return current
 
     raise RuntimeError("literal layout fixes did not converge")
 
@@ -56,10 +77,14 @@ def _fix_try_else_clauses(source: str) -> str:
     raise RuntimeError("try/else dedents did not converge")
 
 
-def _fix_return_spacing(source: str) -> str:
+def _fix_return_spacing(source: str, enabled: frozenset[RuleCode]) -> str:
     current = source
     for _ in range(MAX_PASSES):
-        gaps = return_spacing_gaps(current)
+        gaps = tuple(
+            gap
+            for gap in return_spacing_gaps(current)
+            if SPACING_RULE_CODE_BY_SIDE[gap.side] in enabled
+        )
         if not gaps:
             return current
 

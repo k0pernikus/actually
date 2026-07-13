@@ -3,6 +3,7 @@ from ast_grep_py import SgNode, SgRoot
 from actually.literals import LiteralLayoutGap, literal_layout_gaps
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 from actually.violations import (
+    ALL_RULE_CODES,
     BLANK_AFTER_RETURN,
     BLANK_BEFORE_RETURN,
     NO_ELIF,
@@ -11,6 +12,7 @@ from actually.violations import (
     TERNARY_NOT_EMPTY,
     TERNARY_NOT_NESTED,
     TRAILING_COMMA,
+    RuleCode,
     Violation,
 )
 
@@ -30,7 +32,10 @@ EMPTY_CONTAINER_KINDS = frozenset(
 )
 
 
-def find_violations(source: str) -> tuple[Violation, ...]:
+def find_violations(
+    source: str,
+    enabled: frozenset[RuleCode] = ALL_RULE_CODES,
+) -> tuple[Violation, ...]:
     root = SgRoot(source, "python").root()
     found = (
         *_else_violations(root),
@@ -42,7 +47,10 @@ def find_violations(source: str) -> tuple[Violation, ...]:
     )
 
     return tuple(
-        sorted(found, key=lambda violation: (violation.line, violation.rule.code))
+        sorted(
+            (violation for violation in found if violation.rule.code in enabled),
+            key=lambda violation: (violation.line, violation.rule.code),
+        )
     )
 
 

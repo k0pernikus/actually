@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, get_args
 
 RuleCode = Literal[
     "ACTC001",
@@ -66,6 +66,29 @@ RULES: tuple[Rule, ...] = (
     BLANK_BEFORE_RETURN,
     BLANK_AFTER_RETURN,
 )
+
+
+ALL_RULE_CODES: frozenset[RuleCode] = frozenset(rule.code for rule in RULES)
+
+RuleSelector = Literal[
+    "__ALL__",
+    "ACT",
+    "ACTC",
+    "ACTC001",
+    "ACTC002",
+    "ACTC003",
+    "ACTC004",
+    "ACTL",
+    "ACTL001",
+    "ACTL002",
+    "ACTR",
+    "ACTR001",
+    "ACTR002",
+]
+
+RULE_SELECTOR_BY_VALUE: dict[str, RuleSelector] = {
+    selector: selector for selector in get_args(RuleSelector)
+}
 
 
 @dataclass(frozen=True, slots=True)
