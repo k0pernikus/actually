@@ -164,7 +164,9 @@ def _is_degenerate_arm(arm: SgNode) -> bool:
         return True
 
     if arm.kind() == "string":
-        return not any(child.kind() == "string_content" for child in arm.children())
+        return all(
+            child.kind() in ("string_start", "string_end") for child in arm.children()
+        )
 
     if arm.kind() in EMPTY_CONTAINER_KINDS:
         return not any(child.is_named() for child in arm.children())

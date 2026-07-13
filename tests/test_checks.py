@@ -100,6 +100,24 @@ def test_ternary_with_two_meaningful_arms_is_clean() -> None:
     assert outline('action = "go_to_beach" if sunny else "stay_home"\n') == []
 
 
+def test_interpolation_only_fstring_arm_is_not_degenerate() -> None:
+    assert outline('x = name if plain else f"{scope}{name}"\n') == []
+
+
+def test_single_interpolation_fstring_arm_is_not_degenerate() -> None:
+    assert outline('x = fallback if missing else f"{name}"\n') == []
+
+
+def test_empty_fstring_arm_is_degenerate() -> None:
+    assert outline('x = y if c else f""\n') == [
+        ("ACTC004", 1),
+    ]
+
+
+def test_escape_only_string_arm_is_not_degenerate() -> None:
+    assert outline('x = y if c else "\\n"\n') == []
+
+
 def test_return_needs_blank_line_below_when_code_follows() -> None:
     source = (
         "def f(foo, bar, baz):\n"
