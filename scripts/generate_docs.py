@@ -13,7 +13,7 @@ RULES_TOML_PATH = REPO_ROOT / "rules.toml"
 TEMPLATE_PATH = REPO_ROOT / "README.template.md"
 README_PATH = REPO_ROOT / "README.md"
 RULES_DIR = REPO_ROOT / "rules"
-PLACEHOLDER = "{{rules_table}}"
+PLACEHOLDER = "{{rules_tables}}"
 READONLY_MODE = 0o444
 WRITABLE_MODE = 0o644
 
@@ -281,33 +281,43 @@ def _render_readme(
     if PLACEHOLDER not in template:
         raise ValueError(f"placeholder {PLACEHOLDER} missing from README.template.md")
 
-    rendered = template.replace(PLACEHOLDER, _render_rules_table(active, retired))
+    rendered = template.replace(PLACEHOLDER, _render_group_tables(active, retired))
 
     return f"{GENERATED_BANNER}\n{rendered}"
 
 
-def _render_rules_table(
+def _render_group_tables(
     active: tuple[ActiveRule, ...], retired: tuple[RetiredRule, ...]
 ) -> str:
-    lines = [
-        "| Code | Rule | Status | Auto-fix | What it enforces |",
-        "|:---|:---|:---|:---|:---|",
-        *(
-            f"| {rule.code} | [{rule.name}](rules/{rule.name}.md) | {rule.status} | {FIX_LABELS[rule.fix]} | {rule.summary} |"
-            for rule in sorted(active, key=lambda rule: rule.code)
-        ),
+    groups = sorted({rule.group for rule in active})
+    sections = [
+        _render_group_section(
+            group,
+            tuple(rule for rule in active if rule.group == group),
+        )
+        for group in groups
     ]
     if retired:
         names = ", ".join(
             f"{rule.code} ({rule.name})"
             for rule in sorted(retired, key=lambda rule: rule.code)
         )
-        lines.extend(
-            [
-                "",
-                f"Retired codes, never recycled: {names}.",
-            ]
-        )
+        sections.append(f"Retired codes, never recycled: {names}.")
+
+    return "\n\n".join(sections)
+
+
+def _render_group_section(group: str, rules: tuple[ActiveRule, ...]) -> str:
+    lines = [
+        f"## {group}",
+        "",
+        "| Code | Rule | Status | Auto-fix | What it enforces |",
+        "|:---|:---|:---|:---|:---|",
+        *(
+            f"| {rule.code} | [{rule.name}](rules/{rule.name}.md) | {rule.status} | {FIX_LABELS[rule.fix]} | {rule.summary} |"
+            for rule in sorted(rules, key=lambda rule: rule.code)
+        ),
+    ]
 
     return "\n".join(lines)
 

@@ -11,7 +11,7 @@ with rationale and a banned/wanted example pair — generated from
 [`rules.toml`](rules.toml) and validated by the linter itself
 ([ADR 2](docs/decisions/2_rule_docs_generated_from_rules_toml.md)):
 
-{{rules_table}}
+{{rules_tables}}
 
 ## Usage
 

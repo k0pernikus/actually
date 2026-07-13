@@ -12,14 +12,26 @@ with rationale and a banned/wanted example pair — generated from
 [`rules.toml`](rules.toml) and validated by the linter itself
 ([ADR 2](docs/decisions/2_rule_docs_generated_from_rules_toml.md)):
 
+## actually-conditionals
+
 | Code | Rule | Status | Auto-fix | What it enforces |
 |:---|:---|:---|:---|:---|
 | ACTC001 | [no-else](rules/no-else.md) | stable | partial | `else` on `if`, and the completion clauses on `for`, `while`, `try` |
 | ACTC002 | [no-elif](rules/no-elif.md) | stable | no | `elif` — use guard clauses or a dispatch table |
 | ACTC003 | [ternary-not-nested](rules/ternary-not-nested.md) | stable | no | a ternary inside another ternary's arm (`elif` in expression form) |
 | ACTC004 | [ternary-not-empty](rules/ternary-not-empty.md) | unstable | no | a degenerate ternary arm (`None`, `""`, empty container) — conditional inclusion in disguise |
+
+## actually-literals
+
+| Code | Rule | Status | Auto-fix | What it enforces |
+|:---|:---|:---|:---|:---|
 | ACTL001 | [trailing-comma](rules/trailing-comma.md) | unstable | yes | a dict/list/set literal whose last element lacks a trailing comma |
 | ACTL002 | [one-element-per-line](rules/one-element-per-line.md) | unstable | partial | a dict/list/set literal with elements sharing a line with a bracket or each other |
+
+## actually-returns
+
+| Code | Rule | Status | Auto-fix | What it enforces |
+|:---|:---|:---|:---|:---|
 | ACTR001 | [blank-before-return](rules/blank-before-return.md) | stable | yes | a `return` stacked directly under other statements in its block |
 | ACTR002 | [blank-after-return](rules/blank-after-return.md) | stable | yes | code directly under a `return` line |
 

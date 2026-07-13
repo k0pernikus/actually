@@ -23,10 +23,10 @@
 - every rule is checkable by definition; `fix` declares what `format` can rewrite — `full`,
   `partial`, or absent (check-only). A boolean cannot express `no-else`, whose `try/else`
   dedent fixes only a sub-case, so the key is three-valued by omission
-- `scripts/generate_docs.py` renders `README.md` (from `README.template.md`, rules table with
-  per-rule links) and one `rules/{name}.md` page per active rule (rationale + banned/wanted
-  examples); it deletes stray pages and refuses to run when `rules.toml` disagrees with the
-  code registry
+- `scripts/generate_docs.py` renders `README.md` (from `README.template.md`, one table per
+  rule group under its own heading, per-rule links) and one `rules/{name}.md` page per active
+  rule (rationale + banned/wanted examples); it deletes stray pages and refuses to run when
+  `rules.toml` disagrees with the code registry
 - the generator validates every example with the linter itself: a `banned` snippet must
   trigger its own rule, a `wanted` snippet must be violation-free — doc rot fails the build
 - an hk pre-commit job regenerates and stages the outputs when any source changes; a pre-push
