@@ -14,8 +14,8 @@ description = "bump version via commitizen and push the release tag"
 run = ["uv run cz bump", "git push --follow-tags"]
 
 [tasks.test]
-description = "run the full test suite on four xdist workers"
-run = "uv run pytest --numprocesses=4"
+description = "run the full test suite on two xdist workers"
+run = "uv run pytest --numprocesses=2"
 
 [tasks.rerun-pipeline]
 description = "re-run the failed jobs of the most recent failed workflow run"
