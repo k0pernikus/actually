@@ -17,6 +17,22 @@
 - reintroduce xdist only once a measured parallel run beats the serial run on this suite —
   the measurement, not suite size or test count, is the criterion
 
+## Break-even model
+
+Parallel wall time fits `parallel ≈ floor + serial / n`, where `floor` is the per-machine
+worker-startup cost — derive it from one throwaway parallel run as `parallel − serial / n`
+(the 2026-07 datapoints in Context both yield the same floor on the machine that recorded
+them, confirming the model). Parallel wins once
+
+```text
+serial > floor × n / (n − 1)
+```
+
+so 2 workers need the serial run to exceed twice the floor, 4 workers 4/3 of it. Absolute
+seconds are deliberately not part of the criterion — floors differ per CPU; measure yours.
+Rule of thumb: once the serial suite exceeds roughly double your measured floor, run the
+comparison.
+
 ## Consequences
 
 - re-evaluation is cheap: `uv add --group dev pytest-xdist`, run
