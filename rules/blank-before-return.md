@@ -1,3 +1,4 @@
+<!-- GENERATED FILE — DO NOT EDIT. Hand edits are overwritten by the pre-commit hook; edit README.template.md / rules.toml and run:  uv run python scripts/generate_docs.py -->
 # ACTR001 — blank-before-return
 
 **Group:** actually-returns

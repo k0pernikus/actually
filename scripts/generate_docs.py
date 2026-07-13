@@ -59,6 +59,12 @@ FIX_LABELS = {
     "partial": "partial",
 }
 
+GENERATED_BANNER = (
+    "<!-- GENERATED FILE — DO NOT EDIT."
+    " Hand edits are overwritten by the pre-commit hook;"
+    " edit README.template.md / rules.toml and run:  uv run python scripts/generate_docs.py -->"
+)
+
 PAGE_NOTICE = (
     "Generated from [`rules.toml`](../rules.toml) by"
     " [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file."
@@ -273,7 +279,9 @@ def _render_readme(
     if PLACEHOLDER not in template:
         raise ValueError(f"placeholder {PLACEHOLDER} missing from README.template.md")
 
-    return template.replace(PLACEHOLDER, _render_rules_table(active, retired))
+    rendered = template.replace(PLACEHOLDER, _render_rules_table(active, retired))
+
+    return f"{GENERATED_BANNER}\n{rendered}"
 
 
 def _render_rules_table(
@@ -304,6 +312,7 @@ def _render_rules_table(
 
 def _render_rule_page(rule: ActiveRule) -> str:
     parts = [
+        GENERATED_BANNER,
         f"# {rule.code} — {rule.name}",
         "",
         f"**Group:** {rule.group}",
