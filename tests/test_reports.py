@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from actually.reports import Finding, render_report
+from actually.reports import Finding, OutputFormat, render_report
 from actually.violations import NO_ELSE, TRAILING_COMMA, Violation
 
 
@@ -26,14 +26,53 @@ COMMA_FINDING = Finding(
 )
 
 
-def test_text_report_matches_the_terminal_line() -> None:
-    report = render_report(
-        "text",
-        (ELSE_FINDING,),
-        "9.9.9",
-    )
-
-    assert report == ("src/app.py:4 ACTC001 [no-else] banned `else` clause on `if` — restructure to guard clauses")
+@pytest.mark.parametrize(
+    ("output_format", "findings", "expected"),
+    [
+        pytest.param(
+            "text",
+            (
+                Finding(
+                    path="src/app.py",
+                    violation=Violation(
+                        rule=NO_ELSE,
+                        line=4,
+                        message="banned `else` clause on `if` — restructure to guard clauses",
+                    ),
+                ),
+            ),
+            "src/app.py:4 ACTC001 [no-else] banned `else` clause on `if` — restructure to guard clauses",
+            id="text-terminal-line",
+        ),
+        pytest.param(
+            "github",
+            (
+                Finding(
+                    path="src/app.py",
+                    violation=Violation(
+                        rule=NO_ELSE,
+                        line=4,
+                        message="banned `else` clause on `if` — restructure to guard clauses",
+                    ),
+                ),
+            ),
+            "::error title=well-actually (ACTC001),file=src/app.py,line=4::banned `else` clause on `if` — restructure to guard clauses",
+            id="github-workflow-command",
+        ),
+        pytest.param(
+            "gitlab",
+            (),
+            "[]",
+            id="gitlab-empty-array",
+        ),
+    ],
+)
+def test_report_output_is_byte_exact(
+    output_format: OutputFormat,
+    findings: tuple[Finding, ...],
+    expected: str,
+) -> None:
+    assert render_report(output_format, findings, "9.9.9") == expected
 
 
 def test_gitlab_report_is_code_climate_shaped() -> None:
@@ -70,20 +109,6 @@ def test_gitlab_report_is_stable_across_renders() -> None:
     second = render_report("gitlab", (ELSE_FINDING,), "9.9.9")
 
     assert first == second
-
-
-def test_empty_gitlab_report_is_an_empty_json_array() -> None:
-    assert render_report("gitlab", (), "9.9.9") == "[]"
-
-
-def test_github_report_is_a_workflow_command() -> None:
-    report = render_report(
-        "github",
-        (ELSE_FINDING,),
-        "9.9.9",
-    )
-
-    assert report == ("::error title=well-actually (ACTC001),file=src/app.py,line=4::banned `else` clause on `if` — restructure to guard clauses")
 
 
 def test_sarif_report_carries_tool_results_and_rule_help() -> None:

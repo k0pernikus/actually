@@ -10,12 +10,50 @@ def outline(source: str) -> list[tuple[str, int]]:
     return [(violation.rule.code, violation.line) for violation in find_violations(source)]
 
 
-def test_else_on_if_is_flagged() -> None:
-    source = "def f(x):\n    if x:\n        return 1\n    else:\n        return 2\n"
-
-    assert outline(source) == [
-        ("ACTC001", 4),
-    ]
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        pytest.param(
+            "def f(x):\n    if x:\n        return 1\n    else:\n        return 2\n",
+            [
+                ("ACTC001", 4),
+            ],
+            id="else-on-if",
+        ),
+        pytest.param(
+            "for i in range(3):\n    use(i)\nelse:\n    done()\n",
+            [
+                ("ACTC001", 3),
+            ],
+            id="completion-else-on-for",
+        ),
+        pytest.param(
+            "def f(x):\n    if x == 1:\n        return 1\n    elif x == 2:\n        return 2\n",
+            [
+                ("ACTC002", 4),
+            ],
+            id="elif",
+        ),
+        pytest.param(
+            "x = (1 if a else 2) if b else 3\n",
+            [
+                ("ACTC003", 1),
+            ],
+            id="nested-ternary",
+        ),
+        pytest.param(
+            "x = [y] if y else []\n",
+            [
+                ("ACTC004", 1),
+                ("ACTL001", 1),
+                ("ACTL002", 1),
+            ],
+            id="empty-list-arm-co-reports-literal-layout",
+        ),
+    ],
+)
+def test_banned_conditional_is_flagged(source: str, expected: list[tuple[str, int]]) -> None:
+    assert outline(source) == expected
 
 
 def test_else_on_try_names_the_construct() -> None:
@@ -27,36 +65,6 @@ def test_else_on_try_names_the_construct() -> None:
         ("ACTC001", 6),
     ]
     assert "`try`" in violations[0].message
-
-
-def test_completion_else_on_for_is_flagged() -> None:
-    source = "for i in range(3):\n    use(i)\nelse:\n    done()\n"
-
-    assert outline(source) == [
-        ("ACTC001", 3),
-    ]
-
-
-def test_elif_is_flagged() -> None:
-    source = "def f(x):\n    if x == 1:\n        return 1\n    elif x == 2:\n        return 2\n"
-
-    assert outline(source) == [
-        ("ACTC002", 4),
-    ]
-
-
-def test_nested_ternary_is_flagged() -> None:
-    assert outline("x = (1 if a else 2) if b else 3\n") == [
-        ("ACTC003", 1),
-    ]
-
-
-def test_ternary_with_empty_list_arm_is_flagged() -> None:
-    assert outline("x = [y] if y else []\n") == [
-        ("ACTC004", 1),
-        ("ACTL001", 1),
-        ("ACTL002", 1),
-    ]
 
 
 @pytest.mark.parametrize(
@@ -89,6 +97,19 @@ def test_ternary_with_empty_list_arm_is_flagged() -> None:
         pytest.param(
             'x = y if c else "\\n"\n',
             id="escape-only-string",
+        ),
+        pytest.param(
+            'SCOPE_SEPARATOR = "::"\n'
+            "\n"
+            "\n"
+            "def _parse_label_def(value: object, scope: str | None, context: str) -> LabelDef:\n"
+            "    table = _require_mapping(value, context)\n"
+            '    short_name = _require_str(table.get("name"), f"{context}.name")\n'
+            '    description = _require_str(table.get("description", ""), f"{context}.description")\n'
+            '    name = short_name if scope is None else f"{scope}{SCOPE_SEPARATOR}{short_name}"\n'
+            "\n"
+            "    return LabelDef(name=name, description=description)\n",
+            id="scoped-label-parser-composite",
         ),
     ],
 )
@@ -123,37 +144,27 @@ def test_degenerate_ternary_arm_is_flagged(source: str) -> None:
     ]
 
 
-def test_scoped_label_parser_shape_is_clean() -> None:
-    source = (
-        'SCOPE_SEPARATOR = "::"\n'
-        "\n"
-        "\n"
-        "def _parse_label_def(value: object, scope: str | None, context: str) -> LabelDef:\n"
-        "    table = _require_mapping(value, context)\n"
-        '    short_name = _require_str(table.get("name"), f"{context}.name")\n'
-        '    description = _require_str(table.get("description", ""), f"{context}.description")\n'
-        '    name = short_name if scope is None else f"{scope}{SCOPE_SEPARATOR}{short_name}"\n'
-        "\n"
-        "    return LabelDef(name=name, description=description)\n"
-    )
-
-    assert outline(source) == []
-
-
-def test_return_needs_blank_line_below_when_code_follows() -> None:
-    source = "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n"
-
-    assert outline(source) == [
-        ("ACTR002", 3),
-    ]
-
-
-def test_return_needs_blank_line_above_in_larger_block() -> None:
-    source = "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n"
-
-    assert outline(source) == [
-        ("ACTR001", 4),
-    ]
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        pytest.param(
+            "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n",
+            [
+                ("ACTR002", 3),
+            ],
+            id="missing-blank-line-below",
+        ),
+        pytest.param(
+            "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n",
+            [
+                ("ACTR001", 4),
+            ],
+            id="missing-blank-line-above",
+        ),
+    ],
+)
+def test_return_spacing_violation_is_flagged(source: str, expected: list[tuple[str, int]]) -> None:
+    assert outline(source) == expected
 
 
 @pytest.mark.parametrize(

@@ -27,7 +27,9 @@
 - gitlab: `check_name` = rule code, `severity` = `major` (ruff parity), `fingerprint` =
   sha256 of `path:code:line:message` — stable across runs, distinct per finding
 - sarif: `level` = `warning`, driver rules carry `helpUri` pointing at the per-rule docs page
-- reports carry paths exactly as passed; CI invokes from the repo root with relative paths
+- reports carry paths exactly as passed — path shape is the invoker's contract; a CI job MUST
+  invoke from the repo root with relative paths (GitLab resolves Code Climate paths against
+  the repo root)
 
 ## Consequences
 

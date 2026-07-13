@@ -30,8 +30,9 @@ serial > floor × n / (n − 1)
 
 so 2 workers need the serial run to exceed twice the floor, 4 workers 4/3 of it. Absolute
 seconds are deliberately not part of the criterion — floors differ per CPU; measure yours.
-Rule of thumb: once the serial suite exceeds roughly double your measured floor, run the
-comparison.
+The re-measurement trigger is the model's own break-even, not a round number: the comparison
+is due once serial wall time exceeds floor × n / (n − 1) for any worker count the machine can
+run — with 4 workers, 4/3 of the measured floor.
 
 ## Consequences
 

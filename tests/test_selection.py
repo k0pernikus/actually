@@ -130,6 +130,16 @@ def test_selection_resolves(
         pytest.param(
             ("ACTC001",),
             ("ACTC001",),
+            id="same-selector-in-both-lists",
+        ),
+        pytest.param(
+            ("ACTL", "ACTL"),
+            (),
+            id="selector-twice-in-one-list",
+        ),
+        pytest.param(
+            ("ACTC",),
+            ("ACTC001", "ACTC002", "ACTC003", "ACTC004"),
             id="selection-enables-nothing",
         ),
     ],
@@ -160,31 +170,29 @@ def test_check_reports_only_enabled_rules() -> None:
     ]
 
 
-def test_format_skips_fixes_of_disabled_rules() -> None:
-    source = "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n"
-
-    assert (
-        format_source(
-            source,
-            ALL_CODES
-            - {
-                "ACTR001",
-            },
-        )
-        == source
-    )
-
-
-def test_format_inserts_comma_without_exploding_when_actl002_disabled() -> None:
-    source = 'point = {"x": 1, "y": 2}\n'
-
-    assert format_source(
-        source,
-        ALL_CODES
-        - {
+@pytest.mark.parametrize(
+    ("disabled", "source", "expected"),
+    [
+        pytest.param(
+            "ACTR001",
+            "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n",
+            "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n",
+            id="blank-line-fix-skipped",
+        ),
+        pytest.param(
             "ACTL002",
-        },
-    ) == ('point = {"x": 1, "y": 2,}\n')
+            'point = {"x": 1, "y": 2}\n',
+            'point = {"x": 1, "y": 2,}\n',
+            id="explosion-skipped-comma-still-lands",
+        ),
+    ],
+)
+def test_disabled_rule_contributes_no_fixes(disabled: RuleCode, source: str, expected: str) -> None:
+    enabled = ALL_CODES - {
+        disabled,
+    }
+
+    assert format_source(source, enabled) == expected
 
 
 @pytest.mark.parametrize(

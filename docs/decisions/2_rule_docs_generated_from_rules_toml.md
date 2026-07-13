@@ -45,5 +45,9 @@
   `rules.toml` or `README.template.md`
 - a new rule ships with its documentation or not at all: the congruence check fails on a
   registry/TOML mismatch, the snippet check fails on missing or wrong examples
-- `unstable` marks a rule whose semantics may still change in a MINOR release; `stable` rules
-  change semantics only with a deprecation path
+- `unstable` marks a rule whose semantics MAY still change in a MINOR release; a `stable`
+  rule's semantics never change under its code — a semantic change ships as a new rule under a
+  new code, and the old code goes `removed` in the same release (codes are never recycled, per
+  ADR 1)
+- status moves one way, `unstable → stable → removed`: demoting `stable` back to `unstable` is
+  a semantics change by another name and equally banned

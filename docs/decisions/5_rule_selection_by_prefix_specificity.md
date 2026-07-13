@@ -29,16 +29,20 @@
   (`RULE_SELECTOR_BY_VALUE`, derived from the taxa — never hand-enumerated) and an unknown
   value fails there
 - resolution is specificity, not order: for each rule the longest matching entry wins;
-  `__ALL__` matches everything at length zero; a tie goes to `exclude`
+  `__ALL__` matches everything at length zero. A tie cannot arise: for any rule, equal-length
+  matching entries are the same selector, and a repeated selector is already a hard error
 - `include` defaults to `__ALL__`; `exclude` defaults to empty — the wanted state is running
   everything, and exclude-only workflows need no include
 - hard errors, never silent tolerance:
-    - `__ALL__` more than once across both lists — the second occurrence contradicts the
-      first or restates it; both are authoring mistakes
+    - any selector appearing more than once across `include` and `exclude` — a repeat inside
+      one list restates, the same selector in both lists contradicts; both are authoring
+      mistakes
     - `exclude = __ALL__` without at least one explicit include entry — a linter selected to
       check nothing
-    - an entry that is neither `__ALL__` nor a prefix of a registered code — a typo must
-      never silently become a no-op
+    - an entry outside the selector taxonomy of
+      [ADR 6](6_selector_taxonomy_rule_group_all.md) — a registered rule code, a registered
+      group prefix, or `__ALL__`; a substring like `ACT` or `ACTC00` is a prefix of registered
+      codes yet still fails — a typo must never silently become a no-op
     - a resolved selection that enables zero rules
 - `format` obeys the same selection: a disabled rule contributes neither reports nor fixes
 

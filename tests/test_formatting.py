@@ -6,16 +6,23 @@ from actually.formatting import format_source
 pytestmark = pytest.mark.unit
 
 
-def test_inserts_blank_line_below_return() -> None:
-    source = "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n"
-
-    assert format_source(source) == ("def f(foo, bar, baz):\n    if foo:\n        return foo\n\n    if bar:\n        return baz\n")
-
-
-def test_inserts_blank_line_above_return() -> None:
-    source = "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n"
-
-    assert format_source(source) == ("def f(baz):\n    if baz:\n        foo = 42 + 1337\n\n        return foo\n")
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        pytest.param(
+            "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n",
+            "def f(foo, bar, baz):\n    if foo:\n        return foo\n\n    if bar:\n        return baz\n",
+            id="below-return",
+        ),
+        pytest.param(
+            "def f(baz):\n    if baz:\n        foo = 42 + 1337\n        return foo\n",
+            "def f(baz):\n    if baz:\n        foo = 42 + 1337\n\n        return foo\n",
+            id="above-return",
+        ),
+    ],
+)
+def test_inserts_missing_blank_line_around_return(source: str, expected: str) -> None:
+    assert format_source(source) == expected
 
 
 @pytest.mark.parametrize(
@@ -41,16 +48,15 @@ def test_inserts_blank_line_above_return() -> None:
             'def f():\n    try:\n        value = risky()\n    except ValueError:\n        return 0\n\n    text = """a\nb"""\n\n    return text\n',
             id="string-lines-flatter-than-shift-preserved",
         ),
+        pytest.param(
+            "def f(x):\n    if x:\n        return 1\n    else:\n        return 2\n",
+            "def f(x):\n    if x:\n        return 1\n    else:\n        return 2\n",
+            id="if-else-reported-not-rewritten",
+        ),
     ],
 )
-def test_try_else_clause_formatting(source: str, expected: str) -> None:
+def test_else_clause_formatting(source: str, expected: str) -> None:
     assert format_source(source) == expected
-
-
-def test_if_else_is_reported_not_rewritten() -> None:
-    source = "def f(x):\n    if x:\n        return 1\n    else:\n        return 2\n"
-
-    assert format_source(source) == source
 
 
 @pytest.mark.parametrize(

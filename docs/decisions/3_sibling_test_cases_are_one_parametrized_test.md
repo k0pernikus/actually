@@ -22,21 +22,24 @@
 1. they differ **only in the input payload** (and its paired expected value) — no scenario
    needs its own setup, fixtures, or extra assertions.
 
-Three or more siblings MUST collapse into one `pytest.mark.parametrize` test:
+The **property** is the invariant the test's name states: it MUST hold for every row without
+disjunction, and a name that merely restates the call (`test_outline_matches`) names no
+property. When more than one truthful family partition exists, the author picks one; no
+partition may leave a sibling test standing as its own function, and every family holds at
+least two rows — a single-row family is a standalone function in costume.
+
+Two or more siblings MUST collapse into one `pytest.mark.parametrize` test:
 
 - the test is named for the **property** (`test_valid_ternary_is_clean`), each row's mandatory
   `pytest.param(..., id=...)` names its **scenario** (`constant-separator`) in kebab-case
 - every row owns its payload — rows never share constants or build on each other
   (Do-Repeat-Yourself for test inputs)
-- a scenario that outgrows the shared shape — an extra assertion, its own setup — graduates
-  back to a standalone test; the family keeps the rest
-- two siblings stay standalone tests: pair-churn buys no scanability
-
-Out of scope stays out: tests whose arrange differs structurally (per-scenario filesystem
-layouts), composite real-world pins whose provenance is the point, and rows that would feed
-input through unchanged into an identity assertion (banned as tautology regardless of shape;
-a no-op verdict from a real decision — `format_source` leaving unsafe code alone — is a
-legitimate row, not an identity row).
+- a scenario graduates back to a standalone test ONLY when it needs what a row cannot carry —
+  an extra assertion pinning a failure the shared assertion does not, or setup of its own;
+  anything expressible as payload plus expected value stays a row
+- a row whose expected value is its unchanged input is a fixpoint pin, legitimate ONLY in a
+  family that also carries at least one transforming row; a family whose every row feeds
+  input through unchanged pins nothing and MUST NOT exist
 
 ## Consequences
 

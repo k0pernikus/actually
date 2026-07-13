@@ -1,4 +1,5 @@
 import tomllib
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -64,7 +65,7 @@ def resolve_selection(
 ) -> frozenset[RuleCode]:
     include_selectors = _narrowed(include)
     exclude_selectors = _narrowed(exclude)
-    _reject_repeated_all(include_selectors, exclude_selectors)
+    _reject_repeated_selectors(include_selectors, exclude_selectors)
     effective_include = _effective_include(include_selectors, exclude_selectors)
     enabled = frozenset(rule.code for rule in RULES if _match_length(rule.code, effective_include) > _match_length(rule.code, exclude_selectors))
     if not enabled:
@@ -85,13 +86,14 @@ def _narrowed_entry(entry: str) -> RuleSelector:
     return selector
 
 
-def _reject_repeated_all(
+def _reject_repeated_selectors(
     include: tuple[RuleSelector, ...],
     exclude: tuple[RuleSelector, ...],
 ) -> None:
-    occurrences = sum(1 for entry in (*include, *exclude) if entry == ALL_GROUP)
-    if occurrences > 1:
-        raise SelectionError(f"{ALL_GROUP} may appear at most once across include and exclude")
+    counts = Counter((*include, *exclude))
+    repeated = sorted(entry for entry, count in counts.items() if count > 1)
+    if repeated:
+        raise SelectionError(f"a selector may appear at most once across include and exclude — repeated: {', '.join(repeated)}")
 
 
 def _effective_include(

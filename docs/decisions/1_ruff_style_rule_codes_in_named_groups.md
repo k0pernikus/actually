@@ -19,8 +19,10 @@
   here, once, and never reused for another group
 - every rule has a stable code `{prefix}{NNN}` (three digits, sequential within its group) and a
   kebab-case name; codes are never renumbered and never recycled — a retired rule leaves a hole
-- the registry in `violations.py` mirrors the allocation table below; a new rule lands as a row
-  here first, then as code
+- the living ledger is the code registry in `violations.py` together with `rules.toml`
+  ([ADR 2](2_rule_docs_generated_from_rules_toml.md)), whose congruence is machine-checked; a
+  retired rule keeps its `removed` row there, so never-recycle stays auditable. The table
+  below records the allocation as of this record; only a new group letter amends this ADR
 - CLI output reports `{file}:{line} {code} [{name}] {message}` on every violation
 
 ### Allocation
@@ -39,6 +41,9 @@
 Reserved group letters: `C` (conditionals), `L` (literals), `R` (returns).
 
 ### Rule semantics
+
+`rules.toml` ([ADR 2](2_rule_docs_generated_from_rules_toml.md)) owns rule semantics; this
+section is the allocation-time snapshot.
 
 - ACTC001 bans every `else` clause — on `if`, and the completion clauses on `for`, `while`,
   and `try` alike
