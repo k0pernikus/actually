@@ -23,13 +23,14 @@ run = [
 ]
 
 [tasks.lint]
-description = "read-only full gate: ruff format --check, ruff check, actually check, ty, docs freshness"
+description = "read-only full gate: ruff format --check, ruff check, actually check, ty, docs freshness, lock sync"
 run = [
   "uv run ruff format --check .",
   "uv run ruff check .",
   "uv run actually check .",
   "uv run ty check src tests scripts",
   "uv run python scripts/generate_docs.py --check",
+  "uv lock --check",
 ]
 
 [tasks.test]

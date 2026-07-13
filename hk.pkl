@@ -36,7 +36,7 @@ hooks {
       ["ruff-config-whole-tree"] {
         glob = "ruff.toml"
         depends = List("toml-format")
-        fix = "uv run ruff format . && uv run ruff check --fix ."
+        fix = "mise run format"
       }
       ["ty-config-whole-tree"] {
         glob = "ty.toml"
@@ -82,11 +82,8 @@ hooks {
   }
   ["pre-push"] {
     steps {
-      ["docs-in-sync"] {
-        check = "uv run python scripts/generate_docs.py --check"
-      }
-      ["uv-lock-in-sync"] {
-        check = "uv lock --check"
+      ["full-gate"] {
+        check = "mise run lint"
       }
     }
   }
