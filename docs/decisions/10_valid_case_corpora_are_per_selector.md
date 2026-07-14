@@ -24,10 +24,11 @@
   selection** by `tests/valid-code-checks/test_valid_python_code_passes_check.py`, resolved
   through the ADR 5 machinery (`resolve_selection((dir_name,), ())`) — an unknown directory name
   fails the tests loudly as an unknown selector
-- a per-rule directory allowlists shapes atomically against its rule alone; its cases MAY violate
-  other rules, so only the per-selector tests own the corpora — every tree-wide gate (`ruff` via
-  `extend-exclude`, `actually check` and `ty check` via explicit path scoping in `mise.toml` and
-  `hk.pkl`) leaves `tests/valid-code-checks/_src/` alone
+- a per-rule directory allowlists shapes atomically against its rule alone, and its cases focus
+  on code the directory's rule governs — never planted material for other rules; only the
+  per-selector tests own the corpora — every tree-wide gate (`ruff` via `extend-exclude`,
+  `actually check` and `ty check` via explicit path scoping in `mise.toml` and `hk.pkl`) leaves
+  `tests/valid-code-checks/_src/` alone
 - `__ALL__/` pins the composed behaviour of the whole rule set under the fixed fixer order named
   above; conflicts between rules surface and get decided here
 - the corpora mutate only via `mise run format-valid-cases`: per-selector `format_source`
@@ -36,9 +37,6 @@
   composite converged; every committed case is thereby a joint actually-plus-ruff fixpoint. ty
   deliberately stays out: corpus cases are allowed-shape fragments whose names are undefined by
   construction
-- every per-rule directory carries a `foreign_rule_shapes.py` planting shapes OTHER rules would
-  flag and rewrite; they must survive verbatim under the directory's selector, so any selection
-  leak — in the tests or the format script — fails loud instead of passing silently
 - adding an allowed shape is dropping a file into the matching selector directory — the tests
   glob the directories, no wiring
 
