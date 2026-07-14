@@ -125,7 +125,7 @@ A run of `if …: return` arms that all compare the same subject, closed by a te
 or `raise`, enumerates a closed dispatch — but written as sequential ifs the table is
 invisible, the subject is re-evaluated per arm, and nothing marks the enumeration complete.
 One `match` statement on that subject is the fixpoint: a single dispatch point with an
-explicit default arm, the scrutinee evaluated once. Or-patterns (`case 200 | 201:`) fold arms
+explicit default arm, the scrutinee evaluated once. Or-patterns (`case 403 | 409:`) fold arms
 sharing a body, class patterns (`case str():`) dispatch on type, and the default arm fails
 loud — reaching for `dict.get(key, default)` instead trades the loud unknown-value failure
 for a silent wrong answer. The rule fires only on a genuinely shared scrutinee — this is the
@@ -146,6 +146,12 @@ def http_label(status):
     if status == 404:
         return "missing"
 
+    if status == 403:
+        return "error"
+
+    if status == 409:
+        return "error"
+
     raise ValueError(status)
 '''
 wanted = '''
@@ -156,6 +162,9 @@ def http_label(status):
 
         case 404:
             return "missing"
+
+        case 403 | 409:
+            return "error"
 
         case _:
             raise ValueError(status)
