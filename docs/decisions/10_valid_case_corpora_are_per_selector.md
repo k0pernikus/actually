@@ -26,9 +26,10 @@
   fails the tests loudly as an unknown selector
 - a per-rule directory allowlists shapes atomically against its rule alone, and its cases focus
   on code the directory's rule governs — never planted material for other rules; only the
-  per-selector tests own the corpora — every tree-wide gate (`ruff` via `extend-exclude`,
-  `actually check` and `ty check` via explicit path scoping in `mise.toml` and `hk.pkl`) leaves
-  `tests/valid-code-checks/allowed/` alone
+  per-selector tests own the corpora — every tree-wide gate (`ruff` via `ruff.toml`
+  `extend-exclude`, `ty` via `ty.toml` `[src]` `exclude`, `actually check` via explicit path
+  scoping in `mise.toml` and `hk.pkl`) leaves `tests/valid-code-checks/allowed/` alone; each
+  tool's exclusion lives once, in that tool's own config file, wherever the tool supports one
 - `__ALL__/` pins the composed behaviour of the whole rule set under the fixed fixer order named
   above; conflicts between rules surface and get decided here
 - the corpora mutate only via `mise run format-valid-cases`: per-selector `format_source`

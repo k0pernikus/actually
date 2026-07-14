@@ -1,6 +1,9 @@
 [environment]
 python-version = "3.12"
 
+[src]
+exclude = ["tests/valid-code-checks/allowed"]
+
 [rules]
 ambiguous-protocol-member = "error"
 deprecated = "error"

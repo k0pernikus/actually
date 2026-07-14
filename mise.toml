@@ -36,7 +36,7 @@ run = [
   "uv run ruff format --check .",
   "uv run ruff check .",
   "uv run actually check src scripts tests/*.py tests/valid-code-checks/*.py",
-  "uv run ty check src tests scripts --exclude tests/valid-code-checks/allowed",
+  "uv run ty check src tests scripts",
   "uv run python scripts/generate_docs.py --check",
   "uv lock --check",
 ]

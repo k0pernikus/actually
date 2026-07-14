@@ -22,7 +22,7 @@ hooks {
       ["python-typecheck"] {
         glob = "**/*.py"
         depends = List("python-lint")
-        check = "uv run ty check src tests scripts --exclude tests/valid-code-checks/allowed"
+        check = "uv run ty check src tests scripts"
       }
       ["actually-self-check"] {
         glob = "**/*.py"
@@ -42,7 +42,7 @@ hooks {
       ["ty-config-whole-tree"] {
         glob = "ty.toml"
         depends = List("toml-format")
-        check = "uv run ty check src tests scripts --exclude tests/valid-code-checks/allowed"
+        check = "uv run ty check src tests scripts"
       }
       ["regenerate-docs"] {
         depends = List("toml-format")
