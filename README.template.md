@@ -163,3 +163,8 @@ uv run pytest
 `README.md` and `rules/*.md` are generated from `README.template.md` and
 `src/actually/rules.toml` by `scripts/generate_docs.py`; an hk pre-commit hook regenerates
 and stages them. Edit the sources, never the outputs.
+
+[`python_sources/valid_cases/`](python_sources/valid_cases/) is the drop-in corpus of allowed
+shapes: real Python files the checker MUST stay silent on and `format` MUST leave
+byte-identical. The tests glob the directory, so pinning a new allowed shape is adding a
+file — no test wiring.

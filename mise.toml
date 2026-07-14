@@ -14,12 +14,19 @@ description = "bump version via commitizen and push the release tag"
 run = ["uv run cz bump", "git push --follow-tags"]
 
 [tasks.format]
-description = "apply every fixer to the tree: actually, ruff check --fix, ruff format, taplo"
+description = "apply every fixer to the code tree: actually, ruff check --fix, ruff format, taplo — never the valid-cases corpus"
 run = [
-  "uv run actually format .",
+  "uv run actually format src tests scripts",
   "uv run ruff check --fix .",
   "uv run ruff format .",
   "uv run taplo format",
+]
+
+[tasks.format-valid-cases]
+description = "consciously reformat the valid-cases corpus — the only sanctioned mutation path for python_sources/"
+run = [
+  "uv run actually format python_sources/valid_cases",
+  "uv run ruff format --no-force-exclude python_sources/valid_cases/*.py",
 ]
 
 [tasks.lint]
