@@ -9,13 +9,13 @@
 
 - the single `python_sources/valid_cases/` corpus validated every example against every rule at
   once: an allowed shape for one rule could not be pinned without also satisfying all others, so
-  per-rule allowlisting was impossible and cross-rule interplay was pinned only implicitly
+  no per-rule allowed set could be pinned and cross-rule interplay was pinned only implicitly
 - the corpus is a regression suite — code that must keep passing — so it belongs under `tests/`,
   next to the test module that pins it
 - `format_source` composes its fixers in one fixed order — chains, literals, try/else dedent,
   return spacing — and that order is observable behaviour worth pinning on its own
 - the selector taxonomy ([ADR 6](6_selector_taxonomy_rule_group_all.md)) already names exactly the
-  granularities an allowlist needs: a rule code, a group prefix, and `__ALL__`
+  granularities an allowed-case corpus needs: a rule code, a group prefix, and `__ALL__`
 
 ## Decision
 
@@ -24,7 +24,7 @@
   selection** by `tests/valid-code-checks/test_valid_python_code_passes_check.py`, resolved
   through the ADR 5 machinery (`resolve_selection((dir_name,), ())`) — an unknown directory name
   fails the tests loudly as an unknown selector
-- a per-rule directory allowlists shapes atomically against its rule alone, and its cases focus
+- a per-rule directory pins its rule's allowed shapes atomically, against that rule alone, and its cases focus
   on code the directory's rule governs — never planted material for other rules; only the
   per-selector tests own the corpora — every tree-wide gate (`ruff` via `ruff.toml`
   `extend-exclude`, `ty` via `ty.toml` `[src]` `exclude`, `actually check` via explicit path
@@ -50,6 +50,6 @@
 
 ## Consequences
 
-- rules gain atomic, reviewable allowlists; an example documents exactly which rule sanctions it
+- each rule gains an atomic, reviewable set of allowed cases; an example documents exactly which rule sanctions it
 - composed-order regressions (a fixer reordering changing bytes) fail the `__ALL__` pins
 - a stray directory or typo'd selector name cannot silently pass — selector resolution rejects it

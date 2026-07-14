@@ -174,7 +174,7 @@ and stages them. Edit the sources, never the outputs.
 one directory per rule selector (`ACTH001/`, `ACTC/`, `__ALL__/` — any selector
 [ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md) registers): real Python files the
 checker MUST stay silent on and `format` MUST leave byte-identical under exactly that selection.
-A per-rule directory allowlists shapes atomically against its rule alone; `__ALL__/` pins the
+A per-rule directory pins its rule's allowed shapes atomically, against that rule alone; `__ALL__/` pins the
 composed behaviour of the whole rule set in its fixed fixer order
 ([ADR 10](docs/decisions/10_valid_case_corpora_are_per_selector.md)). The test module beside the
 corpora globs the directories, so pinning a new allowed shape is adding a file — no test wiring.
