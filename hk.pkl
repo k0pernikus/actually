@@ -25,7 +25,8 @@ hooks {
         check = "uv run ty check src tests scripts --exclude tests/valid-code-checks/_src"
       }
       ["actually-self-check"] {
-        glob = List("src/**/*.py", "scripts/**/*.py", "tests/*.py", "tests/**/test_*.py")
+        glob = "**/*.py"
+        exclude = "tests/valid-code-checks/_src/**"
         depends = List("python-format")
         check = "uv run actually check {{files}}"
       }

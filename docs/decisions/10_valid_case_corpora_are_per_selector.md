@@ -30,9 +30,15 @@
   `hk.pkl`) leaves `tests/valid-code-checks/_src/` alone
 - `__ALL__/` pins the composed behaviour of the whole rule set under the fixed fixer order named
   above; conflicts between rules surface and get decided here
-- the corpora mutate only via `mise run format-valid-cases`
-  (`scripts/format_valid_cases.py` — per-selector `format_source` — followed by `ruff format`),
-  so every committed case stays a joint actually-plus-ruff fixpoint
+- the corpora mutate only via `mise run format-valid-cases`: per-selector `format_source`
+  (`scripts/format_valid_cases.py`), then full-settings `ruff format` — which MAY legitimately
+  rewrite (magic-comma explosion, anchor layout) — then `ruff format --check` proving the
+  composite converged; every committed case is thereby a joint actually-plus-ruff fixpoint. ty
+  deliberately stays out: corpus cases are allowed-shape fragments whose names are undefined by
+  construction
+- every per-rule directory carries a `foreign_rule_shapes.py` planting shapes OTHER rules would
+  flag and rewrite; they must survive verbatim under the directory's selector, so any selection
+  leak — in the tests or the format script — fails loud instead of passing silently
 - adding an allowed shape is dropping a file into the matching selector directory — the tests
   glob the directories, no wiring
 

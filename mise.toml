@@ -23,10 +23,11 @@ run = [
 ]
 
 [tasks.format-valid-cases]
-description = "consciously reformat the valid-case corpora per selector — the only sanctioned mutation path for tests/valid-code-checks/_src/"
+description = "consciously reformat the valid-case corpora per selector, then prove the actually-plus-ruff composite converged — the only sanctioned mutation path for tests/valid-code-checks/_src/"
 run = [
   "uv run python scripts/format_valid_cases.py",
   "uv run ruff format --no-force-exclude tests/valid-code-checks/_src",
+  "uv run ruff format --check --no-force-exclude tests/valid-code-checks/_src",
 ]
 
 [tasks.lint]
