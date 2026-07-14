@@ -12,7 +12,9 @@ branches open. The completion clauses on `for`, `while`, and `try` are worse: th
 branch that reads as exceptional everywhere else in the language. Invert the condition into a
 guard clause and return early; dedent the continuation after `except`. `format` rewrites the
 `try`/`except`/`else` case automatically when every `except` body already exits — the other
-forms are reported for human refactoring.
+forms are reported for human refactoring. The `else` keyword inside a conditional expression
+is NOT this rule's target: a flat ternary (`x = "a" if cond else "b"`) stays valid — its
+limits are ternary-not-nested (ACTC003) and ternary-not-empty (ACTC004).
 '''
 banned = '''
 def describe(config):
@@ -34,35 +36,32 @@ code = "ACTC002"
 name = "no-elif"
 group = "actually-conditionals"
 status = "stable"
-summary = "`elif` — N-way dispatch belongs in one `match` statement"
+summary = "`elif` — flatten to guard clauses with early exits"
 rationale = '''
-An `elif` chain is N-way dispatch written as linear control flow: the reader evaluates every
-arm in order to learn the routing. Structural pattern matching expresses the intent natively —
-translated into a `match` statement the chain reaches its fixpoint: one dispatch point, an
-explicit default arm (`case _`), and further reduction is a no-op. Class patterns
-(`case str():`) cover type dispatch, and or-patterns (`case str() | list():`) fold arms that
-share a body. A lookup table remains legitimate for a genuinely data-shaped value-to-value map
-— but reaching for `dict.get(key, default)` to dodge the default arm trades the loud
-unknown-value failure for a silent wrong answer. No auto-fix: synthesizing the default arm
-means inventing a `raise` where the original silently fell through — a RISKY,
-behaviour-altering rewrite reserved for a human.
+An `elif` chain welds N decisions into one compound statement: every arm hangs off the first
+`if`, the reader holds the whole ladder open, and inserting or reordering a case edits the
+middle of the construct. The fixpoint is flat guard clauses — multiple `if` statements, each
+with an early `return`, `raise`, `continue`, or `break` — nothing more: every decision stands
+alone and appending a case is appending a statement. This rule bans exactly `elif`. When the
+flattened arms all compare one shared subject, `prefer-match` (ACTC005) then escalates the
+chain to a `match` statement — that judgement belongs to that rule, never to this one.
 '''
 banned = '''
-def label(code):
-    if code == 200:
-        return "ok"
-    elif code == 404:
-        return "missing"
+def access_level(user, resource):
+    if user.is_admin:
+        return "admin"
+    elif resource.is_public:
+        return "read"
 '''
 wanted = '''
-def label(code):
-    match code:
-        case 200:
-            return "ok"
-        case 404:
-            return "missing"
-        case _:
-            raise ValueError(f"unexpected code: {code}")
+def access_level(user, resource):
+    if user.is_admin:
+        return "admin"
+
+    if resource.is_public:
+        return "read"
+
+    return "none"
 '''
 
 [[rules]]
@@ -125,9 +124,13 @@ rationale = '''
 A run of `if …: return` arms that all compare the same subject, closed by a terminal `return`
 or `raise`, enumerates a closed dispatch — but written as sequential ifs the table is
 invisible, the subject is re-evaluated per arm, and nothing marks the enumeration complete.
-One `match` statement on that subject is the fixpoint, exactly as for `elif` chains (ACTC002):
-a single dispatch point with an explicit default arm, the scrutinee evaluated once. The rule
-fires only on a genuinely shared scrutinee. Chains of independent predicates are guard clauses
+One `match` statement on that subject is the fixpoint: a single dispatch point with an
+explicit default arm, the scrutinee evaluated once. Or-patterns (`case 200 | 201:`) fold arms
+sharing a body, class patterns (`case str():`) dispatch on type, and the default arm fails
+loud — reaching for `dict.get(key, default)` instead trades the loud unknown-value failure
+for a silent wrong answer. The rule fires only on a genuinely shared scrutinee — this is the
+second pass after `no-elif` (ACTC002) has flattened a chain to guards. Chains of independent
+predicates are guard clauses
 and STAY guard clauses — fabricating a scrutinee to force a `match`
 (`match found, description == ALL:` with positional `case True, _:` arms) is the same if-chain
 wearing `match` syntax, and worse: the tuple positions carry unnamed roles. Dependent guard

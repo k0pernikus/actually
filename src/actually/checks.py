@@ -96,7 +96,7 @@ def _elif_violations(root: SgNode) -> tuple[Violation, ...]:
         Violation(
             rule=NO_ELIF,
             line=_report_line(clause),
-            message="banned `elif` — use guard clauses or a dispatch table",
+            message="banned `elif` — flatten to guard clauses with early exits",
         )
         for clause in root.find_all(kind="elif_clause")
     )

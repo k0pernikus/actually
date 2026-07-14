@@ -11,7 +11,9 @@ branches open. The completion clauses on `for`, `while`, and `try` are worse: th
 branch that reads as exceptional everywhere else in the language. Invert the condition into a
 guard clause and return early; dedent the continuation after `except`. `format` rewrites the
 `try`/`except`/`else` case automatically when every `except` body already exits — the other
-forms are reported for human refactoring.
+forms are reported for human refactoring. The `else` keyword inside a conditional expression
+is NOT this rule's target: a flat ternary (`x = "a" if cond else "b"`) stays valid — its
+limits are ternary-not-nested (ACTC003) and ternary-not-empty (ACTC004).
 
 ## Banned
 
