@@ -40,10 +40,13 @@
   construction
 - adding an allowed shape is dropping a file into the matching selector directory — the tests
   glob the directories, no wiring
-- naming: an **allowlist** is a config list of allowed entries (the rule selectors in
-  `well-actually.toml` `include` / `exclude`); a directory holding allowed case variants is
-  therefore named `allowed/`, never `allowlist/`. The denylist counterpart — a directory of
-  variants a rule MUST flag, should one ever exist — is named `denied/` by the same convention
+- naming: **allowed / denied** are the generic admission pair and name the structure — `allowed/`
+  holds variants the selection must admit (check-silent, format-stable); a `denied/` counterpart
+  would hold variants a rule must flag. An **allowlist / denylist** is a config list of entries
+  (the rule selectors in `well-actually.toml` `include` / `exclude`), never a directory name. The
+  lint domain's own judgment keeps its own words: a case is *valid* (contains no violations) or
+  *in violation* — prose about what a case IS uses the domain pair; structure and gate mechanics
+  use the generic pair
 
 ## Consequences
 
