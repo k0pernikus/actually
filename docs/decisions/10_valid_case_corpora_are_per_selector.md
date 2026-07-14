@@ -40,6 +40,10 @@
   construction
 - adding an allowed shape is dropping a file into the matching selector directory — the tests
   glob the directories, no wiring
+- naming: an **allowlist** is a config list of allowed entries (the rule selectors in
+  `well-actually.toml` `include` / `exclude`); a directory holding allowed case variants is
+  therefore named `allowed/`, never `allowlist/`. The denylist counterpart — a directory of
+  variants a rule MUST flag, should one ever exist — is named `denied/` by the same convention
 
 ## Consequences
 
