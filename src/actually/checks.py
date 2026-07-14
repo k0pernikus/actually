@@ -1,3 +1,5 @@
+from itertools import groupby
+
 from ast_grep_py import SgNode, SgRoot
 
 from actually.literals import LiteralLayoutGap, literal_layout_gaps
@@ -9,6 +11,7 @@ from actually.violations import (
     NO_ELIF,
     NO_ELSE,
     ONE_ELEMENT_PER_LINE,
+    PREFER_MATCH,
     TERNARY_NOT_EMPTY,
     TERNARY_NOT_NESTED,
     TRAILING_COMMA,
@@ -46,6 +49,21 @@ STRING_DELIMITER_KINDS = frozenset(
     },
 )
 
+BRANCH_CLAUSE_KINDS = frozenset(
+    {
+        "elif_clause",
+        "else_clause",
+    },
+)
+
+EAGER_UNSAFE_CONDITION_KINDS = frozenset(
+    {
+        "await",
+        "call",
+        "subscript",
+    },
+)
+
 
 def find_violations(
     source: str,
@@ -57,6 +75,7 @@ def find_violations(
         *_elif_violations(root),
         *_nested_ternary_violations(root),
         *_degenerate_ternary_violations(root),
+        *_prefer_match_violations(root),
         *_literal_layout_violations(source),
         *_return_spacing_violations(source),
     )
@@ -113,6 +132,122 @@ def _degenerate_ternary_violations(root: SgNode) -> tuple[Violation, ...]:
         for ternary in root.find_all(kind="conditional_expression")
         if _has_degenerate_arm(ternary)
     )
+
+
+def _prefer_match_violations(root: SgNode) -> tuple[Violation, ...]:
+    containers = (root, *root.find_all(kind="block"))
+
+    return tuple(violation for container in containers for violation in _decision_table_violations(container))
+
+
+def _decision_table_violations(container: SgNode) -> tuple[Violation, ...]:
+    statements = tuple(child for child in container.children() if child.is_named())
+
+    return tuple(
+        Violation(
+            rule=PREFER_MATCH,
+            line=_report_line(run[0]),
+            message="consecutive conditional returns form a decision table — write one `match` statement",
+        )
+        for run, follower in _conditional_return_runs(statements)
+        if len(run) >= 2 and _is_decision_terminal(follower) and _is_match_shaped(run)
+    )
+
+
+def _conditional_return_runs(statements: tuple[SgNode, ...]) -> tuple[tuple[tuple[SgNode, ...], SgNode], ...]:
+    runs = []
+    for is_conditional_return, group in groupby(enumerate(statements), key=_indexed_is_conditional_return):
+        if not is_conditional_return:
+            continue
+
+        indexed = tuple(group)
+        last_index, _ = indexed[-1]
+        follower_index = last_index + 1
+        if follower_index >= len(statements):
+            continue
+
+        runs.append((tuple(statement for _, statement in indexed), statements[follower_index]))
+
+    return tuple(runs)
+
+
+def _indexed_is_conditional_return(indexed: tuple[int, SgNode]) -> bool:
+    _, statement = indexed
+
+    return _is_conditional_return(statement)
+
+
+def _is_conditional_return(statement: SgNode) -> bool:
+    if statement.kind() != "if_statement":
+        return False
+
+    if any(child.kind() in BRANCH_CLAUSE_KINDS for child in statement.children()):
+        return False
+
+    body = _consequence_statements(statement)
+
+    return len(body) == 1 and _is_value_return(body[0])
+
+
+def _consequence_statements(statement: SgNode) -> tuple[SgNode, ...]:
+    consequence = statement.field("consequence")
+    if consequence is None:
+        raise ValueError("if_statement without a consequence block")
+
+    return tuple(child for child in consequence.children() if child.is_named())
+
+
+def _is_value_return(statement: SgNode) -> bool:
+    return statement.kind() == "return_statement" and any(child.is_named() for child in statement.children())
+
+
+def _is_decision_terminal(statement: SgNode) -> bool:
+    if statement.kind() == "raise_statement":
+        return True
+
+    return _is_value_return(statement)
+
+
+def _is_match_shaped(run: tuple[SgNode, ...]) -> bool:
+    conditions = tuple(_condition_of(statement) for statement in run)
+
+    return _shares_one_scrutinee(conditions) or _all_eagerly_evaluable(conditions)
+
+
+def _condition_of(statement: SgNode) -> SgNode:
+    condition = statement.field("condition")
+    if condition is None:
+        raise ValueError("if_statement without a condition")
+
+    return condition
+
+
+def _shares_one_scrutinee(conditions: tuple[SgNode, ...]) -> bool:
+    if not all(condition.kind() == "comparison_operator" for condition in conditions):
+        return False
+
+    scrutinee_texts = {_first_operand_text(condition) for condition in conditions}
+
+    return len(scrutinee_texts) == 1
+
+
+def _first_operand_text(condition: SgNode) -> str:
+    operands = tuple(child for child in condition.children() if child.is_named())
+    if not operands:
+        raise ValueError("comparison_operator without operands")
+
+    return next(iter(operands)).text()
+
+
+def _all_eagerly_evaluable(conditions: tuple[SgNode, ...]) -> bool:
+    return not any(_contains_eager_unsafe_expression(condition) for condition in conditions)
+
+
+def _contains_eager_unsafe_expression(condition: SgNode) -> bool:
+    if condition.kind() in EAGER_UNSAFE_CONDITION_KINDS:
+        return True
+
+    return any(condition.find(kind=kind) is not None for kind in EAGER_UNSAFE_CONDITION_KINDS)
 
 
 def _literal_layout_violations(source: str) -> tuple[Violation, ...]:
@@ -179,16 +314,18 @@ def _ternary_arms(ternary: SgNode) -> tuple[SgNode, SgNode]:
 
 
 def _is_degenerate_arm(arm: SgNode) -> bool:
-    if arm.kind() == "none":
-        return True
+    match arm.kind():
+        case "none":
+            return True
 
-    if arm.kind() == "string":
-        return all(child.kind() in STRING_DELIMITER_KINDS for child in arm.children())
+        case "string":
+            return all(child.kind() in STRING_DELIMITER_KINDS for child in arm.children())
 
-    if arm.kind() in EMPTY_CONTAINER_KINDS:
-        return not any(child.is_named() for child in arm.children())
+        case kind if kind in EMPTY_CONTAINER_KINDS:
+            return not any(child.is_named() for child in arm.children())
 
-    return False
+        case _:
+            return False
 
 
 def _parent_of(node: SgNode) -> SgNode:

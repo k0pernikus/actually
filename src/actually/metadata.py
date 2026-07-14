@@ -127,16 +127,18 @@ def _validated_status(
     entry: dict[str, object],
 ) -> Literal["removed", "stable", "unstable"]:
     status = entry.get("status")
-    if status == "removed":
-        return "removed"
+    match status:
+        case "removed":
+            return "removed"
 
-    if status == "stable":
-        return "stable"
+        case "stable":
+            return "stable"
 
-    if status == "unstable":
-        return "unstable"
+        case "unstable":
+            return "unstable"
 
-    raise ValueError(f"invalid status {status!r} — allowed: {sorted(STATUS_VALUES)}")
+        case _:
+            raise ValueError(f"invalid status {status!r} — allowed: {sorted(STATUS_VALUES)}")
 
 
 def _active_rule(entry: dict[str, object], status: ActiveStatus) -> RuleMetadata:
@@ -187,13 +189,15 @@ def _fix_capability(entry: dict[str, object]) -> FixCapability:
         return "check-only"
 
     fix = entry["fix"]
-    if fix == "full":
-        return "full"
+    match fix:
+        case "full":
+            return "full"
 
-    if fix == "partial":
-        return "partial"
+        case "partial":
+            return "partial"
 
-    raise ValueError(f"invalid fix {fix!r} — declare one of {sorted(DECLARABLE_FIX_VALUES)} or omit the key")
+        case _:
+            raise ValueError(f"invalid fix {fix!r} — declare one of {sorted(DECLARABLE_FIX_VALUES)} or omit the key")
 
 
 def _reject_unknown_keys(entry: dict[str, object], allowed: frozenset[str]) -> None:

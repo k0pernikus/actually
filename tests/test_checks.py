@@ -50,10 +50,60 @@ def outline(source: str) -> list[tuple[str, int]]:
             ],
             id="empty-list-arm-co-reports-literal-layout",
         ),
+        pytest.param(
+            "def f(status):\n    if status == 'a':\n        return 1\n\n    if status == 'b':\n        return 2\n\n    raise ValueError(status)\n",
+            [
+                ("ACTC005", 2),
+            ],
+            id="same-scrutinee-equality-run-with-terminal-raise",
+        ),
+        pytest.param(
+            "def f(found, description):\n    if found:\n        return 'a'\n\n    if description == ALL:\n        return 'b'\n\n    return 'c'\n",
+            [
+                ("ACTC005", 2),
+            ],
+            id="call-free-mixed-subject-run-with-terminal-return",
+        ),
+        pytest.param(
+            "def f(arm):\n    if arm.kind() == 'none':\n        return True\n\n    if arm.kind() == 'string':\n        return is_empty(arm)\n\n    return False\n",
+            [
+                ("ACTC005", 2),
+            ],
+            id="shared-scrutinee-call-run",
+        ),
     ],
 )
 def test_banned_conditional_is_flagged(source: str, expected: list[tuple[str, int]]) -> None:
     assert outline(source) == expected
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param(
+            "def f(parent):\n    if parent is None:\n        return False\n\n    if not check(parent):\n        return False\n\n    return final(parent)\n",
+            id="dependent-guard-chain-with-calls",
+        ),
+        pytest.param(
+            "def f(x):\n    if x:\n        return 1\n\n    return 2\n",
+            id="single-guard-return",
+        ),
+        pytest.param(
+            "def f(x, y):\n    if x == 1:\n        return 1\n\n    if x == 2:\n        return 2\n\n    y.append(x)\n",
+            id="run-without-terminal-return",
+        ),
+        pytest.param(
+            "def f(x):\n    if x == 1:\n        y = compute(x)\n\n        return y\n\n    if x == 2:\n        return 2\n\n    return 3\n",
+            id="multi-statement-arm-breaks-the-run",
+        ),
+        pytest.param(
+            "def f(p):\n    match p:\n        case str() | list():\n            return parse(p)\n        case _:\n            raise TypeError(type(p))\n",
+            id="match-with-union-pattern-arm",
+        ),
+    ],
+)
+def test_sequential_guards_and_match_are_clean(source: str) -> None:
+    assert outline(source) == []
 
 
 def test_else_on_try_names_the_construct() -> None:

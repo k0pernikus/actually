@@ -34,11 +34,18 @@ code = "ACTC002"
 name = "no-elif"
 group = "actually-conditionals"
 status = "stable"
-summary = "`elif` — use guard clauses or a dispatch table"
+summary = "`elif` — N-way dispatch belongs in one `match` statement"
 rationale = '''
-An `elif` chain is N-way dispatch written as control flow: the reader walks every arm in order
-to learn which one matters. Dispatch is data, not code — a lookup table, a `match` statement,
-or a strategy map. A new case becomes a new entry, never a new `elif`.
+An `elif` chain is N-way dispatch written as linear control flow: the reader evaluates every
+arm in order to learn the routing. Structural pattern matching expresses the intent natively —
+translated into a `match` statement the chain reaches its fixpoint: one dispatch point, an
+explicit default arm (`case _`), and further reduction is a no-op. Class patterns
+(`case str():`) cover type dispatch, and or-patterns (`case str() | list():`) fold arms that
+share a body. A lookup table remains legitimate for a genuinely data-shaped value-to-value map
+— but reaching for `dict.get(key, default)` to dodge the default arm trades the loud
+unknown-value failure for a silent wrong answer. No auto-fix: synthesizing the default arm
+means inventing a `raise` where the original silently fell through — a RISKY,
+behaviour-altering rewrite reserved for a human.
 '''
 banned = '''
 def label(code):
@@ -49,12 +56,13 @@ def label(code):
 '''
 wanted = '''
 def label(code):
-    labels = {
-        200: "ok",
-        404: "missing",
-    }
-
-    return labels.get(code, "unknown")
+    match code:
+        case 200:
+            return "ok"
+        case 404:
+            return "missing"
+        case _:
+            raise ValueError(f"unexpected code: {code}")
 '''
 
 [[rules]]
@@ -66,20 +74,23 @@ summary = "a ternary inside another ternary's arm (`elif` in expression form)"
 rationale = '''
 A ternary is the one permitted conditional expression, and only flat: a ternary nested inside
 either arm is an `elif` chain in expression form, with reading order collapsing at exactly the
-point where clarity matters most. Refactor to guard clauses.
+point where clarity matters most. Refactor to guard clauses — or, when the arms enumerate a
+closed decision, one `match` statement (ACTC005).
 '''
 banned = '''
 action = "beach" if sunny else "sleep" if night else "home"
 '''
 wanted = '''
 def action(sunny, night):
-    if sunny:
-        return "beach"
+    match sunny, night:
+        case True, _:
+            return "beach"
 
-    if night:
-        return "sleep"
+        case _, True:
+            return "sleep"
 
-    return "home"
+        case _:
+            return "home"
 '''
 
 [[rules]]
@@ -104,6 +115,48 @@ def parsed(raw):
         raise ValueError("raw input is required")
 
     return parse(raw)
+'''
+
+[[rules]]
+code = "ACTC005"
+name = "prefer-match"
+group = "actually-conditionals"
+status = "unstable"
+summary = "two or more consecutive conditional returns closed by a terminal return or raise — a decision table written as control flow"
+rationale = '''
+A run of `if …: return` arms closed by a terminal `return` or `raise` enumerates a closed
+decision, one arm per case — but written as sequential ifs the table is invisible and nothing
+marks the enumeration complete. One `match` statement is the fixpoint, exactly as for `elif`
+chains (ACTC002): a single dispatch point with an explicit default arm. The rule fires only
+where the rewrite is safe and profitable — every condition inspects one shared scrutinee
+(which `match` evaluates once), or every condition is free of calls and subscripts so hoisting
+the conditions cannot change behaviour. Guard chains whose later conditions depend on earlier
+arms having returned — a `parent is None` check narrowing what the next call may touch — are
+exempt: those conditions must stay sequential. No auto-fix: choosing the scrutinee is
+judgement, and a synthesized raising default arm would alter behaviour — a RISKY rewrite
+reserved for a human.
+'''
+banned = '''
+def declaration(found, description):
+    if found:
+        return f"Found config. Running with: {description}"
+
+    if description == ALL:
+        return "No config found, running with default"
+
+    return f"No config found, running with: {description}"
+'''
+wanted = '''
+def declaration(found, description):
+    match found, description == ALL:
+        case True, _:
+            return f"Found config. Running with: {description}"
+
+        case _, True:
+            return "No config found, running with default"
+
+        case _:
+            return f"No config found, running with: {description}"
 '''
 
 [[rules]]

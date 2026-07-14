@@ -5,9 +5,16 @@
 **Status:** stable
 **Auto-fix:** no
 
-An `elif` chain is N-way dispatch written as control flow: the reader walks every arm in order
-to learn which one matters. Dispatch is data, not code — a lookup table, a `match` statement,
-or a strategy map. A new case becomes a new entry, never a new `elif`.
+An `elif` chain is N-way dispatch written as linear control flow: the reader evaluates every
+arm in order to learn the routing. Structural pattern matching expresses the intent natively —
+translated into a `match` statement the chain reaches its fixpoint: one dispatch point, an
+explicit default arm (`case _`), and further reduction is a no-op. Class patterns
+(`case str():`) cover type dispatch, and or-patterns (`case str() | list():`) fold arms that
+share a body. A lookup table remains legitimate for a genuinely data-shaped value-to-value map
+— but reaching for `dict.get(key, default)` to dodge the default arm trades the loud
+unknown-value failure for a silent wrong answer. No auto-fix: synthesizing the default arm
+means inventing a `raise` where the original silently fell through — a RISKY,
+behaviour-altering rewrite reserved for a human.
 
 ## Banned
 
@@ -23,12 +30,13 @@ def label(code):
 
 ```python
 def label(code):
-    labels = {
-        200: "ok",
-        404: "missing",
-    }
-
-    return labels.get(code, "unknown")
+    match code:
+        case 200:
+            return "ok"
+        case 404:
+            return "missing"
+        case _:
+            raise ValueError(f"unexpected code: {code}")
 ```
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.

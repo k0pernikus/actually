@@ -18,9 +18,10 @@ prints the same catalog in the terminal, docs links included:
 | Code | Rule | Status | Auto-fix | What it enforces |
 |:---|:---|:---|:---|:---|
 | ACTC001 | [no-else](rules/no-else.md) | stable | partial | `else` on `if`, and the completion clauses on `for`, `while`, `try` |
-| ACTC002 | [no-elif](rules/no-elif.md) | stable | no | `elif` — use guard clauses or a dispatch table |
+| ACTC002 | [no-elif](rules/no-elif.md) | stable | no | `elif` — N-way dispatch belongs in one `match` statement |
 | ACTC003 | [ternary-not-nested](rules/ternary-not-nested.md) | stable | no | a ternary inside another ternary's arm (`elif` in expression form) |
 | ACTC004 | [ternary-not-empty](rules/ternary-not-empty.md) | unstable | no | a degenerate ternary arm (`None`, `""`, empty container) — conditional inclusion in disguise |
+| ACTC005 | [prefer-match](rules/prefer-match.md) | unstable | no | two or more consecutive conditional returns closed by a terminal return or raise — a decision table written as control flow |
 
 ## actually-literals
 
