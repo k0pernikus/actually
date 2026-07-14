@@ -76,6 +76,10 @@ the file's corresponding list
 declares its selection on stderr — `Found well-actually.toml. Running with: …` or
 `No well-actually.toml found, running with default '__ALL__'` — so the active subset is
 never a matter of guessing.
+`check --help` and `format --help` are rendered against that same selection: the help names
+exactly the rules the invocation will enforce — split for `format` by what it can rewrite —
+never overselling nor underselling the changeset, whatever order the selection flags and
+`--help` are typed in ([ADR 8](docs/decisions/8_help_reflects_the_active_selection.md)).
 Entries are rule codes (`ACTC004`), group prefixes (`ACTC`), or `__ALL__` — the special
 all-encompassing group ([ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md)). The
 longest match per rule wins; ties go to `exclude`. `include` defaults to `__ALL__`, so
@@ -99,10 +103,10 @@ exclude = ["ACTL"]
 include = ["__ALL__", "ACTL001"]
 ```
 
-Hard errors instead of silent tolerance: an unknown selector, `__ALL__` appearing more than
-once across both lists, `exclude = ["__ALL__"]` without any include entry, and a selection
-that enables no rules. `format` obeys the selection — a disabled rule neither reports nor
-fixes.
+Hard errors instead of silent tolerance: an unknown selector, any selector appearing more
+than once across the two lists, `exclude = ["__ALL__"]` without any include entry, and a
+selection that enables no rules. `format` obeys the selection — a disabled rule neither
+reports nor fixes.
 
 ## CI Reports
 

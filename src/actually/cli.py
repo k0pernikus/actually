@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from importlib.metadata import version as distribution_version
 from pathlib import Path
 
@@ -7,14 +8,14 @@ from rich.table import Table
 
 from actually.checks import find_violations
 from actually.config import (
-    CONFIG_FILE_NAME,
     LoadedSelection,
     SelectionError,
-    describe_selection,
     load_selection,
+    selection_declaration,
 )
 from actually.discovery import python_files
 from actually.formatting import format_source
+from actually.help_text import check_help, format_help
 from actually.metadata import (
     FIX_LABELS,
     RuleCatalog,
@@ -28,10 +29,24 @@ from actually.reports import (
     OutputFormat,
     render_report,
 )
-from actually.violations import ALL_GROUP, RuleCode
+from actually.violations import RuleCode
 
 
 STDOUT_SENTINEL_PATH = "-"
+
+HelpComposer = Callable[
+    [
+        frozenset[RuleCode],
+        RuleCatalog,
+        str,
+    ],
+    str,
+]
+
+HELP_COMPOSER_BY_COMMAND: dict[str, HelpComposer] = {
+    "check": check_help,
+    "format": format_help,
+}
 
 click.rich_click.COMMAND_GROUPS = {
     "*": [
@@ -138,23 +153,30 @@ def _fix_cell(rule: RuleMetadata) -> str:
     return f"[{styles[rule.fix]}]{FIX_LABELS[rule.fix]}[/]"
 
 
-@main.command(
-    name="check",
-    help="Report violations without modifying files; exit 1 when any are found.",
-)
-@click.option(
+def _show_selection_aware_help(ctx: click.Context, _param: click.Parameter, value: bool) -> None:
+    if not value or ctx.resilient_parsing:
+        return
+
+    ctx.command.help = _selection_aware_help_body(ctx)
+    click.echo(ctx.get_help())
+    ctx.exit()
+
+
+INCLUDE_OPTION = click.option(
     "--include",
     "include_entries",
     multiple=True,
+    is_eager=True,
     help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's include list.",
 )
-@click.option(
+EXCLUDE_OPTION = click.option(
     "--exclude",
     "exclude_entries",
     multiple=True,
+    is_eager=True,
     help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
 )
-@click.option(
+OUTPUT_FORMAT_OPTION = click.option(
     "--output-format",
     "output_format_value",
     type=click.Choice(sorted(OUTPUT_FORMAT_BY_VALUE)),
@@ -162,13 +184,33 @@ def _fix_cell(rule: RuleMetadata) -> str:
     show_default=True,
     help="Report format: gitlab (Code Climate JSON for the codequality artifact), github (workflow-command annotations), sarif (SARIF 2.1.0), or text.",
 )
-@click.option(
+OUTPUT_FILE_OPTION = click.option(
     "--output-file",
     "output_file",
     default=STDOUT_SENTINEL_PATH,
     show_default=True,
     help="Write the report to this file; - means stdout.",
 )
+HELP_OPTION = click.option(
+    "--help",
+    "-h",
+    "show_help",
+    is_flag=True,
+    expose_value=False,
+    callback=_show_selection_aware_help,
+    help="Show this message and exit.",
+)
+
+
+def _lint_command_options[CommandFunction: Callable[..., None]](command: CommandFunction) -> CommandFunction:
+    return INCLUDE_OPTION(EXCLUDE_OPTION(OUTPUT_FORMAT_OPTION(OUTPUT_FILE_OPTION(HELP_OPTION(command)))))
+
+
+@main.command(
+    name="check",
+    short_help="Report violations without modifying files; exit 1 when any are found.",
+)
+@_lint_command_options
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
 def check(
     paths: tuple[Path, ...],
@@ -186,7 +228,7 @@ def check(
 
 @main.command(
     name="format",
-    help="Insert missing blank lines around return, dedent safe try/except/else clauses, then report what remains; exit 1 when unfixable violations remain.",
+    short_help="Rewrite files with every auto-fix the active selection enables, then report what remains.",
 )
 @click.option(
     "--only-autofixable",
@@ -194,33 +236,7 @@ def check(
     is_flag=True,
     help="Best effort: apply every available fix, report the rest, and exit 0 even when unfixable violations remain.",
 )
-@click.option(
-    "--include",
-    "include_entries",
-    multiple=True,
-    help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's include list.",
-)
-@click.option(
-    "--exclude",
-    "exclude_entries",
-    multiple=True,
-    help="Rule code, group prefix, or __ALL__; repeatable. Overrides the config file's exclude list.",
-)
-@click.option(
-    "--output-format",
-    "output_format_value",
-    type=click.Choice(sorted(OUTPUT_FORMAT_BY_VALUE)),
-    default="text",
-    show_default=True,
-    help="Report format: gitlab (Code Climate JSON for the codequality artifact), github (workflow-command annotations), sarif (SARIF 2.1.0), or text.",
-)
-@click.option(
-    "--output-file",
-    "output_file",
-    default=STDOUT_SENTINEL_PATH,
-    show_default=True,
-    help="Write the report to this file; - means stdout.",
-)
+@_lint_command_options
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
 def format_files(
     paths: tuple[Path, ...],
@@ -241,29 +257,61 @@ def _selection(
     include_entries: tuple[str, ...],
     exclude_entries: tuple[str, ...],
 ) -> frozenset[RuleCode]:
-    try:
-        loaded = load_selection(Path.cwd(), include_entries, exclude_entries)
-    except SelectionError as error:
-        raise click.UsageError(str(error)) from error
-
+    loaded = _loaded_selection(include_entries, exclude_entries)
     _declare(loaded)
 
     return loaded.enabled
 
 
+def _loaded_selection(
+    include_entries: tuple[str, ...],
+    exclude_entries: tuple[str, ...],
+) -> LoadedSelection:
+    try:
+        return load_selection(Path.cwd(), include_entries, exclude_entries)
+    except SelectionError as error:
+        raise click.UsageError(str(error)) from error
+
+
 def _declare(loaded: LoadedSelection) -> None:
-    description = describe_selection(loaded.enabled)
-    if loaded.config_file_found:
-        click.echo(f"Found {CONFIG_FILE_NAME}. Running with: {description}", err=True)
+    click.echo(selection_declaration(loaded.enabled, config_file_found=loaded.config_file_found), err=True)
 
-        return
 
-    if description == ALL_GROUP:
-        click.echo(f"No {CONFIG_FILE_NAME} found, running with default '{ALL_GROUP}'", err=True)
+def _selection_aware_help_body(ctx: click.Context) -> str:
+    composer = _help_composer(ctx.command.name)
+    loaded = _loaded_selection(
+        _cli_entries(ctx.params, "include_entries"),
+        _cli_entries(ctx.params, "exclude_entries"),
+    )
+    declaration = selection_declaration(loaded.enabled, config_file_found=loaded.config_file_found)
 
-        return
+    return composer(loaded.enabled, load_rule_catalog(), declaration)
 
-    click.echo(f"No {CONFIG_FILE_NAME} found, running with: {description}", err=True)
+
+def _help_composer(command_name: str | None) -> HelpComposer:
+    if command_name is None:
+        raise ValueError("selection-aware help requires a named command")
+
+    composer = HELP_COMPOSER_BY_COMMAND.get(command_name)
+    if composer is None:
+        raise ValueError(f"no selection-aware help composer registered for command {command_name!r}")
+
+    return composer
+
+
+def _cli_entries(params: dict[str, object], key: str) -> tuple[str, ...]:
+    value = params.get(key)
+    if not isinstance(value, tuple):
+        raise TypeError(f"{key} must be parsed eagerly before help renders, got {value!r}")
+
+    return tuple(_cli_entry(item, key) for item in value)
+
+
+def _cli_entry(item: object, key: str) -> str:
+    if not isinstance(item, str):
+        raise TypeError(f"{key} entries must be strings, got {item!r}")
+
+    return item
 
 
 def _output_format(value: str) -> OutputFormat:

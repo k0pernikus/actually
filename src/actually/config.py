@@ -59,6 +59,19 @@ def describe_selection(enabled: frozenset[RuleCode]) -> str:
     return ", ".join(sorted(enabled))
 
 
+def selection_declaration(enabled: frozenset[RuleCode], *, config_file_found: bool) -> str:
+    description = describe_selection(enabled)
+    match config_file_found, description == ALL_GROUP:
+        case True, _:
+            return f"Found {CONFIG_FILE_NAME}. Running with: {description}"
+
+        case _, True:
+            return f"No {CONFIG_FILE_NAME} found, running with default '{ALL_GROUP}'"
+
+        case _:
+            return f"No {CONFIG_FILE_NAME} found, running with: {description}"
+
+
 def resolve_selection(
     include: tuple[str, ...],
     exclude: tuple[str, ...],
