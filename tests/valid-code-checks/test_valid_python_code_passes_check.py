@@ -14,7 +14,7 @@ RESOLVED_TEST_FILE = (
     .resolve()
 )
 
-CASES_DIR = RESOLVED_TEST_FILE.parent / "_src"
+CASES_DIR = RESOLVED_TEST_FILE.parent / "allowed"
 
 SELECTOR_CASES = tuple(
     (selector_dir.name, case_path) for selector_dir in sorted(path for path in CASES_DIR.iterdir() if path.is_dir()) for case_path in sorted(selector_dir.glob("*.py"))

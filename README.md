@@ -199,7 +199,7 @@ uv run pytest
 `src/actually/rules.toml` by `scripts/generate_docs.py`; an hk pre-commit hook regenerates
 and stages them. Edit the sources, never the outputs.
 
-[`tests/valid-code-checks/_src/`](tests/valid-code-checks/_src/) holds the valid-case corpora,
+[`tests/valid-code-checks/allowed/`](tests/valid-code-checks/allowed/) holds the valid-case corpora,
 one directory per rule selector (`ACTH001/`, `ACTC/`, `__ALL__/` — any selector
 [ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md) registers): real Python files the
 checker MUST stay silent on and `format` MUST leave byte-identical under exactly that selection.

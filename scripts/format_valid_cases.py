@@ -10,7 +10,7 @@ REPO_ROOT = (
     .parent.parent
 )
 
-CASES_DIR = REPO_ROOT / "tests" / "valid-code-checks" / "_src"
+CASES_DIR = REPO_ROOT / "tests" / "valid-code-checks" / "allowed"
 
 
 def main() -> None:

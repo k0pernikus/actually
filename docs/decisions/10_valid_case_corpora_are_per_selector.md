@@ -19,7 +19,7 @@
 
 ## Decision
 
-- `tests/valid-code-checks/_src/` holds one directory per registered rule selector (`ACTH001/`,
+- `tests/valid-code-checks/allowed/` holds one directory per registered rule selector (`ACTH001/`,
   `ACTC/`, `__ALL__/`); every `*.py` inside is validated and format-pinned under **exactly that
   selection** by `tests/valid-code-checks/test_valid_python_code_passes_check.py`, resolved
   through the ADR 5 machinery (`resolve_selection((dir_name,), ())`) — an unknown directory name
@@ -28,7 +28,7 @@
   on code the directory's rule governs — never planted material for other rules; only the
   per-selector tests own the corpora — every tree-wide gate (`ruff` via `extend-exclude`,
   `actually check` and `ty check` via explicit path scoping in `mise.toml` and `hk.pkl`) leaves
-  `tests/valid-code-checks/_src/` alone
+  `tests/valid-code-checks/allowed/` alone
 - `__ALL__/` pins the composed behaviour of the whole rule set under the fixed fixer order named
   above; conflicts between rules surface and get decided here
 - the corpora mutate only via `mise run format-valid-cases`: per-selector `format_source`
