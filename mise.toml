@@ -14,19 +14,19 @@ description = "bump version via commitizen and push the release tag"
 run = ["uv run cz bump", "git push --follow-tags"]
 
 [tasks.format]
-description = "apply every fixer to the code tree: actually, ruff check --fix, ruff format, taplo — never the valid-cases corpus"
+description = "apply every fixer to the code tree: actually, ruff check --fix, ruff format, taplo — never the valid-case corpora"
 run = [
-  "uv run actually format src tests scripts",
+  "uv run actually format src scripts tests/*.py tests/valid-code-checks/*.py",
   "uv run ruff check --fix .",
   "uv run ruff format .",
   "uv run taplo format",
 ]
 
 [tasks.format-valid-cases]
-description = "consciously reformat the valid-cases corpus — the only sanctioned mutation path for python_sources/"
+description = "consciously reformat the valid-case corpora per selector — the only sanctioned mutation path for tests/valid-code-checks/_src/"
 run = [
-  "uv run actually format python_sources/valid_cases",
-  "uv run ruff format --no-force-exclude python_sources/valid_cases/*.py",
+  "uv run python scripts/format_valid_cases.py",
+  "uv run ruff format --no-force-exclude tests/valid-code-checks/_src",
 ]
 
 [tasks.lint]
@@ -34,8 +34,8 @@ description = "read-only full gate: ruff format --check, ruff check, actually ch
 run = [
   "uv run ruff format --check .",
   "uv run ruff check .",
-  "uv run actually check .",
-  "uv run ty check src tests scripts",
+  "uv run actually check src scripts tests/*.py tests/valid-code-checks/*.py",
+  "uv run ty check src tests scripts --exclude tests/valid-code-checks/_src",
   "uv run python scripts/generate_docs.py --check",
   "uv lock --check",
 ]

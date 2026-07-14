@@ -199,7 +199,12 @@ uv run pytest
 `src/actually/rules.toml` by `scripts/generate_docs.py`; an hk pre-commit hook regenerates
 and stages them. Edit the sources, never the outputs.
 
-[`python_sources/valid_cases/`](python_sources/valid_cases/) is the drop-in corpus of allowed
-shapes: real Python files the checker MUST stay silent on and `format` MUST leave
-byte-identical. The tests glob the directory, so pinning a new allowed shape is adding a
-file — no test wiring.
+[`tests/valid-code-checks/_src/`](tests/valid-code-checks/_src/) holds the valid-case corpora,
+one directory per rule selector (`ACTH001/`, `ACTC/`, `__ALL__/` — any selector
+[ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md) registers): real Python files the
+checker MUST stay silent on and `format` MUST leave byte-identical under exactly that selection.
+A per-rule directory allowlists shapes atomically against its rule alone; `__ALL__/` pins the
+composed behaviour of the whole rule set in its fixed fixer order
+([ADR 10](docs/decisions/10_valid_case_corpora_are_per_selector.md)). The test module beside the
+corpora globs the directories, so pinning a new allowed shape is adding a file — no test wiring.
+Mutate only via `mise run format-valid-cases`.

@@ -52,5 +52,50 @@ result = (
     )
 )
 
+left = (
+    a  # well-actually: multi-line
+    .foo()
+    .bar()
+    .baz()
+)
+
+right = (
+    (b)  # well-actually: multi-line
+    .poit()
+    .gnarf()
+)
+
+matches = left == right
+
+inline_matches = (
+    a  # well-actually: multi-line
+    .foo()
+    .bar()
+    .baz()
+) == (
+    (b)  # well-actually: multi-line
+    .poit()
+    .gnarf()
+)
+
+if (
+    a  # well-actually: multi-line
+    .foo()
+    .bar()
+    .baz()
+) == (
+    (b)  # well-actually: multi-line
+    .poit()
+    .gnarf()
+):
+    handle()
+
+if (
+    (make(1))  # well-actually: multi-line
+    .build()
+    .check()
+):
+    handle()
+
 plain = make(1)
 single = helper(2).clean
