@@ -47,7 +47,11 @@ def _descendant_carriers(root: Path) -> tuple[Path, ...]:
 
 
 def _spec_of(directory: Path) -> GitIgnoreSpec:
-    lines = (directory / ".gitignore").read_text(encoding="utf-8").splitlines()
+    lines = (
+        (directory / ".gitignore")  # well-actually: multi-line
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
 
     return GitIgnoreSpec.from_lines(lines)
 
@@ -56,7 +60,11 @@ def _is_ignored(resolved_candidate: Path, specs: tuple[tuple[Path, GitIgnoreSpec
     applicable = [(directory, spec) for directory, spec in specs if directory in resolved_candidate.parents]
     deepest_first = sorted(applicable, key=lambda entry: len(entry[0].parts), reverse=True)
     for directory, spec in deepest_first:
-        verdict = spec.check_file(resolved_candidate.relative_to(directory).as_posix())
+        verdict = spec.check_file(
+            (resolved_candidate)  # well-actually: multi-line
+            .relative_to(directory)
+            .as_posix(),
+        )
         if verdict.include is not None:
             return verdict.include
 

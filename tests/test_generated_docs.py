@@ -6,7 +6,11 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = (
+    Path(__file__)  # well-actually: multi-line
+    .resolve()
+    .parent.parent
+)
 
 
 def test_generated_docs_are_fresh() -> None:

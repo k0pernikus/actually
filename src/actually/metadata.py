@@ -85,7 +85,11 @@ def rule_docs_url(name: RuleName) -> str:
 
 
 def load_rule_catalog() -> RuleCatalog:
-    payload = tomllib.loads(files("actually").joinpath(RULES_TOML_RESOURCE).read_text(encoding="utf-8"))
+    payload = tomllib.loads(
+        files("actually")  # well-actually: multi-line
+        .joinpath(RULES_TOML_RESOURCE)
+        .read_text(encoding="utf-8"),
+    )
     entries = payload.get("rules")
     if not isinstance(entries, list):
         raise TypeError("rules.toml must declare an array of [[rules]] tables")

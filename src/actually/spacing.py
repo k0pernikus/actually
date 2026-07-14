@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from ast_grep_py import SgNode, SgRoot
+from ast_grep_py import SgNode
+
+from actually.sg_nodes import parsed_root
 
 
 CLAUSE_KINDS = frozenset(
@@ -31,7 +33,7 @@ class ReturnSpacingGap:
 
 
 def return_spacing_gaps(source: str) -> tuple[ReturnSpacingGap, ...]:
-    root = SgRoot(source, "python").root()
+    root = parsed_root(source)
 
     return tuple(gap for statement in root.find_all(kind="return_statement") for gap in (*_gap_above(statement), *_gap_below(statement)))
 

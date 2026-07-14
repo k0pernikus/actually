@@ -171,6 +171,42 @@ def http_label(status):
 '''
 
 [[rules]]
+code = "ACTH001"
+name = "multi-line-chain"
+group = "actually-chains"
+status = "unstable"
+fix = "partial"
+summary = "a chain of two or more invocations not one call per line under a `# well-actually: multi-line` anchor"
+rationale = '''
+A fluent chain reads one step per line — but ruff format joins any chain that fits the line
+length, parentheses or not; its preview fluent style engages only past the limit, and no chain
+analog of the magic trailing comma exists (astral-sh/ruff#8598). The one layout signal a
+formatter cannot cross is a comment, and only on the chain's base-receiver line — on the open
+paren it pins the parentheses while the chain inside still joins. `format` therefore rewrites
+every chain of two or more invocations to break at the first call, one call per line, and
+anchors the base line with `# well-actually: multi-line`; run before `ruff format`, the anchored
+layout is a fixpoint of both tools. Consecutive attribute-only steps share one line
+(`.parent.parent`), and a short chain — fewer than three invocations and fewer than three dot
+steps — additionally parenthesizes its base receiver (`(make(1))`): without those parens ruff
+re-renders the short head flat and relocates the anchor to the joined line's end. A stale
+anchor — its chain shrunk below two
+invocations — is stripped so the directive cannot rot. Chains carrying foreign comments or
+multiline arguments are reported for human layout instead, and chains inside f-string
+interpolations are exempt.
+'''
+banned = '''
+command = CommandLine.of("git").subcommand("config").argument(key)
+'''
+wanted = '''
+command = (
+    CommandLine  # well-actually: multi-line
+    .of("git")
+    .subcommand("config")
+    .argument(key)
+)
+'''
+
+[[rules]]
 code = "ACTL001"
 name = "trailing-comma"
 group = "actually-literals"

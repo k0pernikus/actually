@@ -13,6 +13,12 @@ with rationale and a banned/wanted example pair — generated from
 ([ADR 2](docs/decisions/2_rule_docs_generated_from_rules_toml.md)). `actually rules --list`
 prints the same catalog in the terminal, docs links included:
 
+## actually-chains
+
+| Code | Rule | Status | Auto-fix | What it enforces |
+|:---|:---|:---|:---|:---|
+| ACTH001 | [multi-line-chain](rules/multi-line-chain.md) | unstable | partial | a chain of two or more invocations not one call per line under a `# well-actually: multi-line` anchor |
+
 ## actually-conditionals
 
 | Code | Rule | Status | Auto-fix | What it enforces |
@@ -87,6 +93,12 @@ explicitly is always linted.
   rewrite would change behaviour, so it is reported for human refactoring instead
 - rewrites dict/list/set literals to one element per line with a trailing comma — literals
   carrying comments or multiline elements are reported for human formatting instead
+- rewrites chains of two or more invocations to one call per line, anchored with
+  `# well-actually: multi-line` on the base-receiver line so `ruff format` cannot re-join them,
+  parenthesizing a short chain's base receiver
+  ([ADR 9](docs/decisions/9_anchor_comments_pin_layout_ruff_cannot_express.md)), and strips the
+  anchor when its chain shrinks below two invocations — chains carrying foreign comments or
+  multiline arguments are reported for human layout instead
 - `--only-autofixable` makes it best effort: every available fix is applied, the remaining
   violations are still reported, and the exit code stays 0
 

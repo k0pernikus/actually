@@ -8,6 +8,7 @@ RuleCode = Literal[
     "ACTC003",
     "ACTC004",
     "ACTC005",
+    "ACTH001",
     "ACTL001",
     "ACTL002",
     "ACTR001",
@@ -20,6 +21,7 @@ RuleName = Literal[
     "ternary-not-nested",
     "ternary-not-empty",
     "prefer-match",
+    "multi-line-chain",
     "trailing-comma",
     "one-element-per-line",
     "blank-before-return",
@@ -27,6 +29,7 @@ RuleName = Literal[
 ]
 
 RuleGroup = Literal[
+    "actually-chains",
     "actually-conditionals",
     "actually-literals",
     "actually-returns",
@@ -45,6 +48,7 @@ NO_ELIF = Rule(code="ACTC002", name="no-elif", group="actually-conditionals")
 TERNARY_NOT_NESTED = Rule(code="ACTC003", name="ternary-not-nested", group="actually-conditionals")
 TERNARY_NOT_EMPTY = Rule(code="ACTC004", name="ternary-not-empty", group="actually-conditionals")
 PREFER_MATCH = Rule(code="ACTC005", name="prefer-match", group="actually-conditionals")
+MULTI_LINE_CHAIN = Rule(code="ACTH001", name="multi-line-chain", group="actually-chains")
 TRAILING_COMMA = Rule(code="ACTL001", name="trailing-comma", group="actually-literals")
 ONE_ELEMENT_PER_LINE = Rule(code="ACTL002", name="one-element-per-line", group="actually-literals")
 BLANK_BEFORE_RETURN = Rule(code="ACTR001", name="blank-before-return", group="actually-returns")
@@ -56,6 +60,7 @@ RULES: tuple[Rule, ...] = (
     TERNARY_NOT_NESTED,
     TERNARY_NOT_EMPTY,
     PREFER_MATCH,
+    MULTI_LINE_CHAIN,
     TRAILING_COMMA,
     ONE_ELEMENT_PER_LINE,
     BLANK_BEFORE_RETURN,
@@ -67,6 +72,7 @@ ALL_RULE_CODES: frozenset[RuleCode] = frozenset(rule.code for rule in RULES)
 
 RuleGroupPrefix = Literal[
     "ACTC",
+    "ACTH",
     "ACTL",
     "ACTR",
 ]
@@ -79,6 +85,7 @@ ALL_GROUP: AllGroup = "__ALL__"
 
 RULE_GROUP_BY_PREFIX: dict[RuleGroupPrefix, RuleGroup] = {
     "ACTC": "actually-conditionals",
+    "ACTH": "actually-chains",
     "ACTL": "actually-literals",
     "ACTR": "actually-returns",
 }

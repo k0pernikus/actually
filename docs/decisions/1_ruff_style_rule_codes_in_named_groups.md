@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Created:** 2026-07-13
-**Updated:** 2026-07-13
+**Updated:** 2026-07-14
 
 ## Context
 
@@ -33,12 +33,14 @@
 | ACTC002 | no-elif | actually-conditionals |
 | ACTC003 | ternary-not-nested | actually-conditionals |
 | ACTC004 | ternary-not-empty | actually-conditionals |
+| ACTC005 | prefer-match | actually-conditionals |
+| ACTH001 | multi-line-chain | actually-chains |
 | ACTL001 | trailing-comma | actually-literals |
 | ACTL002 | one-element-per-line | actually-literals |
 | ACTR001 | blank-before-return | actually-returns |
 | ACTR002 | blank-after-return | actually-returns |
 
-Reserved group letters: `C` (conditionals), `L` (literals), `R` (returns).
+Reserved group letters: `C` (conditionals), `H` (chains), `L` (literals), `R` (returns).
 
 ### Rule semantics
 
@@ -54,6 +56,9 @@ section is the allocation-time snapshot.
   (`parsed = None if raw is None else parse(raw)`)
 - ACTR001/ACTR002 require a blank line above a `return` that follows other statements in its
   block, and below a `return` when more code follows
+- ACTH001 requires every chain of two or more invocations one call per line, anchored
+  `# well-actually: multi-line` on the base-receiver line
+  ([ADR 9](9_anchor_comments_pin_layout_ruff_cannot_express.md))
 
 ## Roadmap
 

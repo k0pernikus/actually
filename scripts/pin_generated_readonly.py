@@ -1,7 +1,11 @@
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = (
+    Path(__file__)  # well-actually: multi-line
+    .resolve()
+    .parent.parent
+)
 READONLY_MODE = 0o444
 
 

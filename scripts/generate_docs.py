@@ -12,7 +12,11 @@ from actually.metadata import (
 )
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = (
+    Path(__file__)  # well-actually: multi-line
+    .resolve()
+    .parent.parent
+)
 TEMPLATE_PATH = REPO_ROOT / "README.template.md"
 README_PATH = REPO_ROOT / "README.md"
 RULES_DIR = REPO_ROOT / "rules"

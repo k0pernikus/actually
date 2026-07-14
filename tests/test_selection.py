@@ -22,6 +22,7 @@ ALL_CODES: frozenset[RuleCode] = frozenset(
         "ACTC003",
         "ACTC004",
         "ACTC005",
+        "ACTH001",
         "ACTL001",
         "ACTL002",
         "ACTR001",
@@ -186,6 +187,12 @@ def test_check_reports_only_enabled_rules() -> None:
             'point = {"x": 1, "y": 2}\n',
             'point = {"x": 1, "y": 2,}\n',
             id="explosion-skipped-comma-still-lands",
+        ),
+        pytest.param(
+            "ACTH001",
+            "value = make(1).build().render()\n",
+            "value = make(1).build().render()\n",
+            id="chain-explosion-skipped",
         ),
     ],
 )

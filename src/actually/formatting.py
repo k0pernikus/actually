@@ -1,16 +1,24 @@
-from ast_grep_py import SgNode, SgRoot
+from ast_grep_py import SgNode
 
+from actually.chains import (
+    canonicalizable_chains,
+    explode_chains,
+    stale_anchor_removals,
+    strip_anchors,
+)
 from actually.literals import (
     canonicalizable_literals,
     explode_collection_literals,
     insert_commas,
     missing_comma_insertions,
 )
+from actually.sg_nodes import parsed_root, start_position
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 from actually.violations import (
     ALL_RULE_CODES,
     BLANK_AFTER_RETURN,
     BLANK_BEFORE_RETURN,
+    MULTI_LINE_CHAIN,
     NO_ELSE,
     ONE_ELEMENT_PER_LINE,
     TRAILING_COMMA,
@@ -46,11 +54,33 @@ def format_source(
     source: str,
     enabled: frozenset[RuleCode] = ALL_RULE_CODES,
 ) -> str:
-    current = _fix_literal_layout(source, enabled)
+    current = _fix_chain_layout(source, enabled)
+    current = _fix_literal_layout(current, enabled)
     if NO_ELSE.code in enabled:
         current = _fix_try_else_clauses(current)
 
     return _fix_return_spacing(current, enabled)
+
+
+def _fix_chain_layout(source: str, enabled: frozenset[RuleCode]) -> str:
+    if MULTI_LINE_CHAIN.code not in enabled:
+        return source
+
+    current = source
+    for _ in range(MAX_PASSES):
+        removals = stale_anchor_removals(current)
+        if removals:
+            current = strip_anchors(current, removals)
+            continue
+
+        chains = canonicalizable_chains(current)
+        if chains:
+            current = explode_chains(current, chains)
+            continue
+
+        return current
+
+    raise RuntimeError("chain layout fixes did not converge")
 
 
 def _fix_literal_layout(source: str, enabled: frozenset[RuleCode]) -> str:
@@ -98,7 +128,7 @@ def _fix_return_spacing(source: str, enabled: frozenset[RuleCode]) -> str:
 
 
 def _safely_removable_else_clauses(source: str) -> tuple[SgNode, ...]:
-    root = SgRoot(source, "python").root()
+    root = parsed_root(source)
 
     return tuple(clause for clause in root.find_all(kind="else_clause") if _is_safely_removable(clause))
 
@@ -135,11 +165,17 @@ def _every_except_clause_exits(parent: SgNode) -> bool:
 
 
 def _block_starts_below_keyword(clause: SgNode) -> bool:
-    return _clause_block(clause).range().start.line > clause.range().start.line
+    block_line, _ = start_position(_clause_block(clause))
+    keyword_line, _ = start_position(clause)
+
+    return block_line > keyword_line
 
 
 def _ends_in_terminating_statement(except_clause: SgNode) -> bool:
-    statements = _clause_block(except_clause).children()
+    statements = (
+        (_clause_block(except_clause))  # well-actually: multi-line
+        .children()
+    )
     if not statements:
         return False
 

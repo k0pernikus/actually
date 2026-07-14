@@ -8,7 +8,12 @@ from actually.formatting import format_source
 
 pytestmark = pytest.mark.unit
 
-VALID_CASES_DIR = Path(__file__).resolve().parent.parent / "python_sources" / "valid_cases"
+RESOLVED_TEST_FILE = (
+    (Path(__file__))  # well-actually: multi-line
+    .resolve()
+)
+
+VALID_CASES_DIR = RESOLVED_TEST_FILE.parent.parent / "python_sources" / "valid_cases"
 
 VALID_CASE_PATHS = sorted(VALID_CASES_DIR.glob("*.py"))
 

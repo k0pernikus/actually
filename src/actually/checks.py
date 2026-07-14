@@ -1,13 +1,16 @@
 from itertools import groupby
 
-from ast_grep_py import SgNode, SgRoot
+from ast_grep_py import SgNode
 
+from actually.chains import ANCHOR_COMMENT, ChainLayoutGap, chain_layout_gaps
 from actually.literals import LiteralLayoutGap, literal_layout_gaps
+from actually.sg_nodes import parsed_root
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
 from actually.violations import (
     ALL_RULE_CODES,
     BLANK_AFTER_RETURN,
     BLANK_BEFORE_RETURN,
+    MULTI_LINE_CHAIN,
     NO_ELIF,
     NO_ELSE,
     ONE_ELEMENT_PER_LINE,
@@ -61,13 +64,14 @@ def find_violations(
     source: str,
     enabled: frozenset[RuleCode] = ALL_RULE_CODES,
 ) -> tuple[Violation, ...]:
-    root = SgRoot(source, "python").root()
+    root = parsed_root(source)
     found = (
         *_else_violations(root),
         *_elif_violations(root),
         *_nested_ternary_violations(root),
         *_degenerate_ternary_violations(root),
         *_prefer_match_violations(root),
+        *_chain_layout_violations(source),
         *_literal_layout_violations(source),
         *_return_spacing_violations(source),
     )
@@ -228,7 +232,28 @@ def _first_operand_text(condition: SgNode) -> str:
     if not operands:
         raise ValueError("comparison_operator without operands")
 
-    return next(iter(operands)).text()
+    first_operand = next(iter(operands))
+
+    return first_operand.text()
+
+
+def _chain_layout_violations(source: str) -> tuple[Violation, ...]:
+    return tuple(_chain_violation(gap) for gap in chain_layout_gaps(source))
+
+
+def _chain_violation(gap: ChainLayoutGap) -> Violation:
+    if gap.kind == "stale-anchor":
+        return Violation(
+            rule=MULTI_LINE_CHAIN,
+            line=gap.line + 1,
+            message=f"stale `{ANCHOR_COMMENT}` anchor — no chain of two or more invocations starts here",
+        )
+
+    return Violation(
+        rule=MULTI_LINE_CHAIN,
+        line=gap.line + 1,
+        message=f"chain of two or more invocations — one call per line, base line anchored with `{ANCHOR_COMMENT}`",
+    )
 
 
 def _literal_layout_violations(source: str) -> tuple[Violation, ...]:
