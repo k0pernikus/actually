@@ -7,8 +7,8 @@
 
 A ternary is the one permitted conditional expression, and only flat: a ternary nested inside
 either arm is an `elif` chain in expression form, with reading order collapsing at exactly the
-point where clarity matters most. Refactor to guard clauses — or, when the arms enumerate a
-closed decision, one `match` statement (ACTC005).
+point where clarity matters most. Refactor to guard clauses — or, when the arms dispatch on a
+single subject, one `match` statement (ACTC005).
 
 ## Banned
 
@@ -20,15 +20,13 @@ action = "beach" if sunny else "sleep" if night else "home"
 
 ```python
 def action(sunny, night):
-    match sunny, night:
-        case True, _:
-            return "beach"
+    if sunny:
+        return "beach"
 
-        case _, True:
-            return "sleep"
+    if night:
+        return "sleep"
 
-        case _:
-            return "home"
+    return "home"
 ```
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.

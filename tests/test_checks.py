@@ -58,13 +58,6 @@ def outline(source: str) -> list[tuple[str, int]]:
             id="same-scrutinee-equality-run-with-terminal-raise",
         ),
         pytest.param(
-            "def f(found, description):\n    if found:\n        return 'a'\n\n    if description == ALL:\n        return 'b'\n\n    return 'c'\n",
-            [
-                ("ACTC005", 2),
-            ],
-            id="call-free-mixed-subject-run-with-terminal-return",
-        ),
-        pytest.param(
             "def f(arm):\n    if arm.kind() == 'none':\n        return True\n\n    if arm.kind() == 'string':\n        return is_empty(arm)\n\n    return False\n",
             [
                 ("ACTC005", 2),
@@ -83,6 +76,10 @@ def test_banned_conditional_is_flagged(source: str, expected: list[tuple[str, in
         pytest.param(
             "def f(parent):\n    if parent is None:\n        return False\n\n    if not check(parent):\n        return False\n\n    return final(parent)\n",
             id="dependent-guard-chain-with-calls",
+        ),
+        pytest.param(
+            "def f(found, description):\n    if found:\n        return 'a'\n\n    if description == ALL:\n        return 'b'\n\n    return 'c'\n",
+            id="independent-predicate-guards-stay-guards",
         ),
         pytest.param(
             "def f(x):\n    if x:\n        return 1\n\n    return 2\n",

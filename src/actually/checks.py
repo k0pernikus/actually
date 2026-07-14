@@ -56,14 +56,6 @@ BRANCH_CLAUSE_KINDS = frozenset(
     },
 )
 
-EAGER_UNSAFE_CONDITION_KINDS = frozenset(
-    {
-        "await",
-        "call",
-        "subscript",
-    },
-)
-
 
 def find_violations(
     source: str,
@@ -147,10 +139,10 @@ def _decision_table_violations(container: SgNode) -> tuple[Violation, ...]:
         Violation(
             rule=PREFER_MATCH,
             line=_report_line(run[0]),
-            message="consecutive conditional returns form a decision table — write one `match` statement",
+            message="consecutive conditional returns dispatch on one subject — write one `match` statement",
         )
         for run, follower in _conditional_return_runs(statements)
-        if len(run) >= 2 and _is_decision_terminal(follower) and _is_match_shaped(run)
+        if len(run) >= 2 and _is_decision_terminal(follower) and _dispatches_one_scrutinee(run)
     )
 
 
@@ -208,10 +200,10 @@ def _is_decision_terminal(statement: SgNode) -> bool:
     return _is_value_return(statement)
 
 
-def _is_match_shaped(run: tuple[SgNode, ...]) -> bool:
+def _dispatches_one_scrutinee(run: tuple[SgNode, ...]) -> bool:
     conditions = tuple(_condition_of(statement) for statement in run)
 
-    return _shares_one_scrutinee(conditions) or _all_eagerly_evaluable(conditions)
+    return _shares_one_scrutinee(conditions)
 
 
 def _condition_of(statement: SgNode) -> SgNode:
@@ -237,17 +229,6 @@ def _first_operand_text(condition: SgNode) -> str:
         raise ValueError("comparison_operator without operands")
 
     return next(iter(operands)).text()
-
-
-def _all_eagerly_evaluable(conditions: tuple[SgNode, ...]) -> bool:
-    return not any(_contains_eager_unsafe_expression(condition) for condition in conditions)
-
-
-def _contains_eager_unsafe_expression(condition: SgNode) -> bool:
-    if condition.kind() in EAGER_UNSAFE_CONDITION_KINDS:
-        return True
-
-    return any(condition.find(kind=kind) is not None for kind in EAGER_UNSAFE_CONDITION_KINDS)
 
 
 def _literal_layout_violations(source: str) -> tuple[Violation, ...]:

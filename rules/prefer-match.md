@@ -5,44 +5,45 @@
 **Status:** unstable
 **Auto-fix:** no
 
-A run of `if …: return` arms closed by a terminal `return` or `raise` enumerates a closed
-decision, one arm per case — but written as sequential ifs the table is invisible and nothing
-marks the enumeration complete. One `match` statement is the fixpoint, exactly as for `elif`
-chains (ACTC002): a single dispatch point with an explicit default arm. The rule fires only
-where the rewrite is safe and profitable — every condition inspects one shared scrutinee
-(which `match` evaluates once), or every condition is free of calls and subscripts so hoisting
-the conditions cannot change behaviour. Guard chains whose later conditions depend on earlier
-arms having returned — a `parent is None` check narrowing what the next call may touch — are
-exempt: those conditions must stay sequential. No auto-fix: choosing the scrutinee is
-judgement, and a synthesized raising default arm would alter behaviour — a RISKY rewrite
+A run of `if …: return` arms that all compare the same subject, closed by a terminal `return`
+or `raise`, enumerates a closed dispatch — but written as sequential ifs the table is
+invisible, the subject is re-evaluated per arm, and nothing marks the enumeration complete.
+One `match` statement on that subject is the fixpoint, exactly as for `elif` chains (ACTC002):
+a single dispatch point with an explicit default arm, the scrutinee evaluated once. The rule
+fires only on a genuinely shared scrutinee. Chains of independent predicates are guard clauses
+and STAY guard clauses — fabricating a scrutinee to force a `match`
+(`match found, description == ALL:` with positional `case True, _:` arms) is the same if-chain
+wearing `match` syntax, and worse: the tuple positions carry unnamed roles. Dependent guard
+chains — a `parent is None` check narrowing what the next call may touch — are equally exempt.
+No auto-fix: a synthesized raising default arm would alter behaviour — a RISKY rewrite
 reserved for a human.
 
 ## Banned
 
 ```python
-def declaration(found, description):
-    if found:
-        return f"Found config. Running with: {description}"
+def http_label(status):
+    if status == 200:
+        return "ok"
 
-    if description == ALL:
-        return "No config found, running with default"
+    if status == 404:
+        return "missing"
 
-    return f"No config found, running with: {description}"
+    raise ValueError(status)
 ```
 
 ## Wanted
 
 ```python
-def declaration(found, description):
-    match found, description == ALL:
-        case True, _:
-            return f"Found config. Running with: {description}"
+def http_label(status):
+    match status:
+        case 200:
+            return "ok"
 
-        case _, True:
-            return "No config found, running with default"
+        case 404:
+            return "missing"
 
         case _:
-            return f"No config found, running with: {description}"
+            raise ValueError(status)
 ```
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.

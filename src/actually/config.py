@@ -61,15 +61,13 @@ def describe_selection(enabled: frozenset[RuleCode]) -> str:
 
 def selection_declaration(enabled: frozenset[RuleCode], *, config_file_found: bool) -> str:
     description = describe_selection(enabled)
-    match config_file_found, description == ALL_GROUP:
-        case True, _:
-            return f"Found {CONFIG_FILE_NAME}. Running with: {description}"
+    if config_file_found:
+        return f"Found {CONFIG_FILE_NAME}. Running with: {description}"
 
-        case _, True:
-            return f"No {CONFIG_FILE_NAME} found, running with default '{ALL_GROUP}'"
+    if description == ALL_GROUP:
+        return f"No {CONFIG_FILE_NAME} found, running with default '{ALL_GROUP}'"
 
-        case _:
-            return f"No {CONFIG_FILE_NAME} found, running with: {description}"
+    return f"No {CONFIG_FILE_NAME} found, running with: {description}"
 
 
 def resolve_selection(
