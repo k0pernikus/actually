@@ -510,7 +510,7 @@ wheels = [
 
 [[package]]
 name = "well-actually"
-version = "0.8.0"
+version = "0.9.0"
 source = { editable = "." }
 dependencies = [
     { name = "ast-grep-py" },
