@@ -35,6 +35,22 @@ itself — it is its own tool with neither as a dependency; pair them in your ow
 in that order. This repo gates itself on both toolchains plus its own linter on every
 commit, which is the guarantee exercised live.
 
+Compose them as two pipelines, not one. In a **format pipeline**, run `actually format
+--only-autofixable` so the reported-but-unfixable remainder — chains needing manual layout,
+literals carrying comments — is reported without exiting non-zero; plain `actually format`
+exits 1 on that remainder, so under `set -e` or a task runner `ruff format` never runs. Enforce
+the remainder in a **check pipeline**, where `actually check`'s non-zero exit is the gate:
+
+```bash
+# format / fix — applies every auto-fix, never aborts on the manual-layout remainder
+actually format --only-autofixable .
+ruff format .
+
+# check / CI gate — non-zero exit enforces what format could not fix
+actually check .
+ruff check .
+```
+
 ## Usage
 
 ```bash
