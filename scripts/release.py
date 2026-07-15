@@ -6,6 +6,13 @@ from typing import NoReturn
 import rich_click as click
 
 
+CZ_NO_COMMITS_FOUND = 3
+CZ_NO_INCREMENT = 21
+NOTHING_TO_RELEASE = frozenset({
+    CZ_NO_COMMITS_FOUND,
+    CZ_NO_INCREMENT,
+})
+
 REPO_ROOT = (
     Path(__file__)  # well-actually: multi-line
     .resolve()
@@ -13,18 +20,22 @@ REPO_ROOT = (
 )
 
 
+def _fail(message: str) -> NoReturn:
+    raise click.ClickException(message)
+
+
 def _run(argv: list[str]) -> None:
-    subprocess.run(argv, cwd=REPO_ROOT, check=True)
+    completed = subprocess.run(argv, cwd=REPO_ROOT)
+    if completed.returncode != 0:
+        _fail(f"{' '.join(argv)} failed (exit {completed.returncode})")
 
 
 def _capture(argv: list[str]) -> str:
-    completed = subprocess.run(argv, cwd=REPO_ROOT, check=True, text=True, capture_output=True)
+    completed = subprocess.run(argv, cwd=REPO_ROOT, text=True, capture_output=True)
+    if completed.returncode != 0:
+        _fail(f"{' '.join(argv)} failed:\n{completed.stderr.strip()}")
 
     return completed.stdout.strip()
-
-
-def _abort(message: str) -> NoReturn:
-    raise SystemExit(f"release aborted: {message}")
 
 
 def _assert_on_main() -> None:
@@ -35,7 +46,7 @@ def _assert_on_main() -> None:
         "HEAD",
     ])
     if branch != "main":
-        _abort(f"releases are cut from main only, current branch is {branch!r}")
+        _fail(f"releases are cut from main only, current branch is {branch!r}")
 
 
 def _assert_clean_tree() -> None:
@@ -45,7 +56,7 @@ def _assert_clean_tree() -> None:
         "--porcelain",
     ])
     if status:
-        _abort("working tree is dirty, commit or stash before releasing:\n" + status)
+        _fail("working tree is dirty, commit or stash before releasing:\n" + status)
 
 
 def _assert_in_sync() -> None:
@@ -62,7 +73,7 @@ def _assert_in_sync() -> None:
         "main..origin/main",
     ])
     if behind != "0":
-        _abort(f"main is {behind} commit(s) behind origin/main, pull before releasing")
+        _fail(f"main is {behind} commit(s) behind origin/main, pull before releasing")
 
 
 def _current_version() -> str:
@@ -73,28 +84,38 @@ def _current_version() -> str:
     ])
 
 
-def _preview() -> None:
-    _run([
+def _bump_argv(*, dry_run: bool) -> list[str]:
+    base = [
         "uv",
         "run",
         "cz",
         "bump",
-        "--dry-run",
-        "--version-files-only",
         "--yes",
-    ])
+        "--version-files-only",
+    ]
+    if dry_run:
+        return [
+            *base,
+            "--dry-run",
+        ]
+
+    return base
+
+
+def _bump(*, dry_run: bool) -> None:
+    completed = subprocess.run(_bump_argv(dry_run=dry_run), cwd=REPO_ROOT)
+    if completed.returncode == 0:
+        return
+
+    if completed.returncode in NOTHING_TO_RELEASE:
+        _fail("nothing to release: no version increment from the commits since the last tag")
+
+    _fail(f"cz bump failed (exit {completed.returncode})")
 
 
 def _perform() -> None:
     previous = _current_version()
-    _run([
-        "uv",
-        "run",
-        "cz",
-        "bump",
-        "--yes",
-        "--version-files-only",
-    ])
+    _bump(dry_run=False)
     _run([
         "uv",
         "lock",
@@ -129,16 +150,13 @@ def _perform() -> None:
     ])
 
 
-def _require_consent(assume_yes: bool) -> None:
-    if assume_yes:
-        return
-
+def _confirm_or_fail() -> None:
     if not sys.stdin.isatty():
-        _abort("non-interactive; pass --assume-yes to cut the release headlessly, or --dry-run to preview")
+        _fail("non-interactive; pass --assume-yes to cut the release headlessly, or --dry-run to preview")
 
-    _preview()
+    _bump(dry_run=True)
     if not click.confirm("cut this release now — commit, tag, and push --follow-tags?", default=False):
-        _abort("declined at the confirmation prompt")
+        _fail("declined at the confirmation prompt")
 
 
 @click.command()
@@ -150,11 +168,13 @@ def main(dry_run: bool, assume_yes: bool) -> None:
     _assert_in_sync()
 
     if dry_run:
-        _preview()
+        _bump(dry_run=True)
 
         return
 
-    _require_consent(assume_yes)
+    if not assume_yes:
+        _confirm_or_fail()
+
     _perform()
 
 
