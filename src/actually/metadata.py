@@ -11,6 +11,7 @@ RULE_DOCS_BASE_URL = "https://github.com/k0pernikus/actually/blob/main/rules"
 
 ActiveStatus = Literal["stable", "unstable"]
 FixCapability = Literal["check-only", "full", "partial"]
+RuffRelation = Literal["conflicts", "supersedes"]
 
 STATUS_VALUES = frozenset(
     {
@@ -41,6 +42,7 @@ ACTIVE_RULE_KEYS = frozenset(
 )
 RUFF_CONFLICT_KEYS = frozenset(
     {
+        "kind",
         "reason",
         "rule",
     },
@@ -63,6 +65,7 @@ FIX_LABELS: dict[FixCapability, str] = {
 
 @dataclass(frozen=True, slots=True)
 class RuffConflict:
+    kind: RuffRelation
     rule: str
     reason: str
 
@@ -195,9 +198,23 @@ def _ruff_conflict(item: object) -> RuffConflict:
     _reject_unknown_keys(table, RUFF_CONFLICT_KEYS)
 
     return RuffConflict(
+        kind=_ruff_relation(table),
         rule=_required_string(table, "rule"),
         reason=_required_string(table, "reason"),
     )
+
+
+def _ruff_relation(table: dict[str, object]) -> RuffRelation:
+    kind = _required_string(table, "kind")
+    match kind:
+        case "conflicts":
+            return "conflicts"
+
+        case "supersedes":
+            return "supersedes"
+
+        case _:
+            raise ValueError(f"invalid ruff-conflict kind {kind!r} — allowed: conflicts, supersedes")
 
 
 def _registered_rule(code: str) -> Rule:

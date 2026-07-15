@@ -5,7 +5,7 @@ group = "actually-if-conditions"
 status = "stable"
 summary = "`else` on an `if` — flatten to guard clauses with early exits"
 ruff_conflicts = [
-  { rule = "PLR5501", reason = "PLR5501 (collapsible-else-if) collapses `else:` wrapping an `if` into `elif … else`, keeping an `else` on the `if` chain this rule forbids" },
+  { rule = "PLR5501", kind = "supersedes", reason = "PLR5501 (collapsible-else-if) de-nests `else:` wrapping an `if` to `elif … else`; this rule goes further, banning any `else` on an `if`, so PLR5501's output still needs flattening to guard clauses" },
 ]
 rationale = '''
 An `else` on an `if` hides the happy path one indent deeper and forces the reader to hold both
@@ -39,7 +39,7 @@ group = "actually-if-conditions"
 status = "stable"
 summary = "`elif` — flatten to guard clauses with early exits"
 ruff_conflicts = [
-  { rule = "PLR5501", reason = "PLR5501 (collapsible-else-if) rewrites `else: if` into an `elif`, which this rule forbids" },
+  { rule = "PLR5501", kind = "supersedes", reason = "PLR5501 (collapsible-else-if) rewrites `else: if` to `elif`; this rule flattens the same nesting further, banning `elif` outright in favour of guard clauses" },
 ]
 rationale = '''
 An `elif` chain welds N decisions into one compound statement: every arm hangs off the first
@@ -101,7 +101,7 @@ group = "actually-ternaries"
 status = "unstable"
 summary = "a degenerate ternary arm (`None`, `\"\"`, empty container) — conditional inclusion in disguise"
 ruff_conflicts = [
-  { rule = "SIM108", reason = "SIM108 (if-else-block-instead-of-if-exp) rewrites an `if`/`else` assigning in both branches into a ternary; a `None`/empty branch becomes the degenerate arm this rule forbids" },
+  { rule = "SIM108", kind = "supersedes", reason = "SIM108 (if-else-block-instead-of-if-exp) rewrites an `if`/`else` to a ternary — a form this rule allows, except when a branch is `None`/empty, which is the degenerate arm this rule forbids" },
 ]
 rationale = '''
 An arm that exists only for conditional inclusion — `None`, an empty string, an empty container
@@ -185,7 +185,7 @@ status = "stable"
 fix = "partial"
 summary = "`else` on `try` — dedent the continuation after the `except` clauses"
 ruff_conflicts = [
-  { rule = "TRY300", reason = "TRY300 (try-consider-else) recommends moving a `return` out of the `try` body into an `else:` clause — the completion clause this rule forbids" },
+  { rule = "TRY300", kind = "conflicts", reason = "TRY300 (try-consider-else) moves a `return` out of the `try` body INTO an `else:` clause — the opposite of this rule, which removes that completion clause entirely" },
 ]
 rationale = '''
 The `else` clause on `try`/`except` overloads `else` to mean "no exception was raised", putting

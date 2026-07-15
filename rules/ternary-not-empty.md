@@ -27,8 +27,8 @@ def parsed(raw):
     return parse(raw)
 ```
 
-## Conflicts with ruff
+## Supersedes (stricter than ruff)
 
-- `SIM108` — SIM108 (if-else-block-instead-of-if-exp) rewrites an `if`/`else` assigning in both branches into a ternary; a `None`/empty branch becomes the degenerate arm this rule forbids
+- `SIM108` — SIM108 (if-else-block-instead-of-if-exp) rewrites an `if`/`else` to a ternary — a form this rule allows, except when a branch is `None`/empty, which is the degenerate arm this rule forbids
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.

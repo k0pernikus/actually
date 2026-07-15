@@ -34,8 +34,8 @@ def describe(config):
     return str(config)
 ```
 
-## Conflicts with ruff
+## Supersedes (stricter than ruff)
 
-- `PLR5501` — PLR5501 (collapsible-else-if) collapses `else:` wrapping an `if` into `elif … else`, keeping an `else` on the `if` chain this rule forbids
+- `PLR5501` — PLR5501 (collapsible-else-if) de-nests `else:` wrapping an `if` to `elif … else`; this rule goes further, banning any `else` on an `if`, so PLR5501's output still needs flattening to guard clauses
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.

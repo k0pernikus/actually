@@ -36,8 +36,8 @@ def access_level(user, resource):
     return "none"
 ```
 
-## Conflicts with ruff
+## Supersedes (stricter than ruff)
 
-- `PLR5501` — PLR5501 (collapsible-else-if) rewrites `else: if` into an `elif`, which this rule forbids
+- `PLR5501` — PLR5501 (collapsible-else-if) rewrites `else: if` to `elif`; this rule flattens the same nesting further, banning `elif` outright in favour of guard clauses
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.

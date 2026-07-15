@@ -142,13 +142,19 @@ def _render_rule_page(rule: RuleMetadata) -> str:
 
 
 def _conflicts_block(rule: RuleMetadata) -> list[str]:
-    if not rule.ruff_conflicts:
+    return [
+        *_relation_section(rule, "conflicts", "Conflicts with ruff"),
+        *_relation_section(rule, "supersedes", "Supersedes (stricter than ruff)"),
+    ]
+
+
+def _relation_section(rule: RuleMetadata, kind: str, heading: str) -> list[str]:
+    items = [f"- `{conflict.rule}` — {conflict.reason}" for conflict in rule.ruff_conflicts if conflict.kind == kind]
+    if not items:
         return []
 
-    items = [f"- `{conflict.rule}` — {conflict.reason}" for conflict in rule.ruff_conflicts]
-
     return [
-        "## Conflicts with ruff",
+        f"## {heading}",
         "",
         *items,
         "",

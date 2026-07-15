@@ -39,6 +39,6 @@ def describe(path):
 
 ## Conflicts with ruff
 
-- `TRY300` — TRY300 (try-consider-else) recommends moving a `return` out of the `try` body into an `else:` clause — the completion clause this rule forbids
+- `TRY300` — TRY300 (try-consider-else) moves a `return` out of the `try` body INTO an `else:` clause — the opposite of this rule, which removes that completion clause entirely
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.
