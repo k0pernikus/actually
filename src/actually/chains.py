@@ -14,6 +14,13 @@ SPINE_FIELD_BY_KIND = {
     "subscript": "value",
 }
 
+CALLED_OR_SUBSCRIPTED = frozenset(
+    {
+        "call",
+        "subscript",
+    },
+)
+
 WRAP_PARENT_KINDS = frozenset(
     {
         "expression_statement",
@@ -39,12 +46,12 @@ class _Chain:
     base_parenthesized: bool
     segment_ends: tuple[tuple[int, int], ...]
     call_count: int
-    dot_step_count: int
+    fluent_count: int
     has_method_call: bool
 
     @property
     def needs_base_parens(self) -> bool:
-        return self.call_count < 3 and self.dot_step_count < 3 and not self.base_parenthesized
+        return self.fluent_count < 2 and not self.base_parenthesized
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,9 +150,8 @@ def _same_range(candidate: SgNode | None, node: SgNode) -> bool:
 
 def _chain_of(top: SgNode) -> _Chain:
     path = _spine_path(top)
-    bottom = path[-1]
-    base_node = bottom if bottom.kind() == "call" else _spine_field_node(bottom)
-    steps = tuple(reversed(path[:-1])) if bottom.kind() == "call" else tuple(reversed(path))
+    base_node, step_nodes = _base_and_step_nodes(path)
+    steps = tuple(reversed(step_nodes))
     base_end, segment_ends = _segment_ends(base_node, steps)
     calls = tuple(node for node in path if node.kind() == "call")
     base_parenthesized = base_node.kind() == "parenthesized_expression"
@@ -157,9 +163,33 @@ def _chain_of(top: SgNode) -> _Chain:
         base_parenthesized=base_parenthesized,
         segment_ends=segment_ends,
         call_count=len(calls) + base_calls,
-        dot_step_count=len([node for node in path if node.kind() == "attribute"]),
+        fluent_count=_fluent_count(path),
         has_method_call=any(_is_method_call(call) for call in calls),
     )
+
+
+def _fluent_count(path: tuple[SgNode, ...]) -> int:
+    return len([node for node in path if node.kind() == "attribute" and _value_is_called(node)])
+
+
+def _value_is_called(attribute: SgNode) -> bool:
+    value = _spine_field_node(attribute)
+
+    return value.kind() in CALLED_OR_SUBSCRIPTED
+
+
+def _base_and_step_nodes(path: tuple[SgNode, ...]) -> tuple[SgNode, tuple[SgNode, ...]]:
+    bottom = path[-1]
+    if bottom.kind() == "call":
+        return bottom, path[:-1]
+
+    call_indices = [index for index, node in enumerate(path) if node.kind() == "call"]
+    if not call_indices:
+        return _spine_field_node(bottom), path
+
+    receiver_attribute = path[call_indices[-1] + 1]
+
+    return _spine_field_node(receiver_attribute), path[: call_indices[-1] + 2]
 
 
 def _is_method_call(call: SgNode) -> bool:

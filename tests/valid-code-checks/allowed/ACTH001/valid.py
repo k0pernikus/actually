@@ -99,3 +99,22 @@ if (
 
 plain = make(1)
 single = helper(2).clean
+
+selected = (
+    (element.page)  # well-actually: multi-line
+    .get_by_role(name)
+    .click()
+)
+
+navigated = (
+    element.page  # well-actually: multi-line
+    .locator(target)
+    .get_by_text(label)
+    .click()
+)
+
+interspersed = (
+    (obj)  # well-actually: multi-line
+    .foo()
+    .b.bar()
+)
