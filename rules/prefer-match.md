@@ -1,7 +1,7 @@
 <!-- GENERATED FILE — DO NOT EDIT. Hand edits are overwritten by the pre-commit hook; edit README.template.md / src/actually/rules.toml and run:  uv run python scripts/generate_docs.py -->
-# ACTC005 — prefer-match
+# ACTI003 — prefer-match
 
-**Group:** actually-conditionals
+**Group:** actually-if-conditions
 **Status:** unstable
 **Auto-fix:** no
 
@@ -13,7 +13,7 @@ explicit default arm, the scrutinee evaluated once. Or-patterns (`case 403 | 409
 sharing a body, class patterns (`case str():`) dispatch on type, and the default arm fails
 loud — reaching for `dict.get(key, default)` instead trades the loud unknown-value failure
 for a silent wrong answer. The rule fires only on a genuinely shared scrutinee — this is the
-second pass after `no-elif` (ACTC002) has flattened a chain to guards. Chains of independent
+second pass after `no-elif` (ACTI002) has flattened a chain to guards. Chains of independent
 predicates are guard clauses
 and STAY guard clauses — fabricating a scrutinee to force a `match`
 (`match found, description == ALL:` with positional `case True, _:` arms) is the same if-chain

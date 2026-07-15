@@ -19,7 +19,7 @@ from actually.violations import (
     BLANK_AFTER_RETURN,
     BLANK_BEFORE_RETURN,
     MULTI_LINE_CHAIN,
-    NO_ELSE,
+    NO_TRY_ELSE,
     ONE_ELEMENT_PER_LINE,
     TRAILING_COMMA,
     RuleCode,
@@ -56,7 +56,7 @@ def format_source(
 ) -> str:
     current = _fix_chain_layout(source, enabled)
     current = _fix_literal_layout(current, enabled)
-    if NO_ELSE.code in enabled:
+    if NO_TRY_ELSE.code in enabled:
         current = _fix_try_else_clauses(current)
 
     return _fix_return_spacing(current, enabled)

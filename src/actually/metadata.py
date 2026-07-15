@@ -33,9 +33,16 @@ ACTIVE_RULE_KEYS = frozenset(
         "group",
         "name",
         "rationale",
+        "ruff_conflicts",
         "status",
         "summary",
         "wanted",
+    },
+)
+RUFF_CONFLICT_KEYS = frozenset(
+    {
+        "reason",
+        "rule",
     },
 )
 RETIRED_RULE_KEYS = frozenset(
@@ -55,6 +62,12 @@ FIX_LABELS: dict[FixCapability, str] = {
 
 
 @dataclass(frozen=True, slots=True)
+class RuffConflict:
+    rule: str
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
 class RuleMetadata:
     code: RuleCode
     name: RuleName
@@ -65,6 +78,7 @@ class RuleMetadata:
     rationale: str
     banned: str
     wanted: str
+    ruff_conflicts: tuple[RuffConflict, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,6 +175,28 @@ def _active_rule(entry: dict[str, object], status: ActiveStatus) -> RuleMetadata
         rationale=_required_string(entry, "rationale"),
         banned=_required_string(entry, "banned"),
         wanted=_required_string(entry, "wanted"),
+        ruff_conflicts=_ruff_conflicts(entry),
+    )
+
+
+def _ruff_conflicts(entry: dict[str, object]) -> tuple[RuffConflict, ...]:
+    raw = entry.get("ruff_conflicts", [])
+    if not isinstance(raw, list):
+        raise TypeError("ruff_conflicts must be an array of tables")
+
+    return tuple(_ruff_conflict(item) for item in raw)
+
+
+def _ruff_conflict(item: object) -> RuffConflict:
+    if not isinstance(item, dict):
+        raise TypeError("every ruff_conflicts entry must be a table")
+
+    table: dict[str, object] = {str(key): value for key, value in item.items()}
+    _reject_unknown_keys(table, RUFF_CONFLICT_KEYS)
+
+    return RuffConflict(
+        rule=_required_string(table, "rule"),
+        reason=_required_string(table, "reason"),
     )
 
 

@@ -1,7 +1,7 @@
 <!-- GENERATED FILE — DO NOT EDIT. Hand edits are overwritten by the pre-commit hook; edit README.template.md / src/actually/rules.toml and run:  uv run python scripts/generate_docs.py -->
-# ACTC004 — ternary-not-empty
+# ACTT002 — ternary-not-empty
 
-**Group:** actually-conditionals
+**Group:** actually-ternaries
 **Status:** unstable
 **Auto-fix:** no
 
@@ -26,5 +26,9 @@ def parsed(raw):
 
     return parse(raw)
 ```
+
+## Conflicts with ruff
+
+- `SIM108` — SIM108 (if-else-block-instead-of-if-exp) rewrites an `if`/`else` assigning in both branches into a ternary; a `None`/empty branch becomes the degenerate arm this rule forbids
 
 Generated from [`rules.toml`](../src/actually/rules.toml) by [`scripts/generate_docs.py`](../scripts/generate_docs.py) — edit the TOML, not this file.

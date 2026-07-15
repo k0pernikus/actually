@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Created:** 2026-07-14
-**Updated:** 2026-07-14
+**Updated:** 2026-07-15
 **See also:** [ADR 5](5_rule_selection_by_prefix_specificity.md), [ADR 6](6_selector_taxonomy_rule_group_all.md)
 
 ## Context
@@ -20,7 +20,7 @@
 ## Decision
 
 - `tests/valid-code-checks/allowed/` holds one directory per registered rule selector (`ACTH001/`,
-  `ACTC/`, `__ALL__/`); every `*.py` inside is validated and format-pinned under **exactly that
+  `ACTI/`, `__ALL__/`); every `*.py` inside is validated and format-pinned under **exactly that
   selection** by `tests/valid-code-checks/test_valid_python_code_passes_check.py`, resolved
   through the ADR 5 machinery (`resolve_selection((dir_name,), ())`) — an unknown directory name
   fails the tests loudly as an unknown selector

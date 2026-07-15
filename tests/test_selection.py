@@ -17,11 +17,14 @@ pytestmark = pytest.mark.unit
 
 ALL_CODES: frozenset[RuleCode] = frozenset(
     {
-        "ACTC001",
-        "ACTC002",
-        "ACTC003",
-        "ACTC004",
-        "ACTC005",
+        "ACTI001",
+        "ACTI002",
+        "ACTI003",
+        "ACTT001",
+        "ACTT002",
+        "ACTE001",
+        "ACTE002",
+        "ACTE003",
         "ACTH001",
         "ACTL001",
         "ACTL002",
@@ -51,10 +54,10 @@ ALL_CODES: frozenset[RuleCode] = frozenset(
             id="exclude-only-drops-a-group",
         ),
         pytest.param(
-            ("ACTC004",),
+            ("ACTT002",),
             ("__ALL__",),
             {
-                "ACTC004",
+                "ACTT002",
             },
             id="exclude-all-include-one",
         ),
@@ -77,13 +80,11 @@ ALL_CODES: frozenset[RuleCode] = frozenset(
             id="exclude-group-reinclude-one-member",
         ),
         pytest.param(
-            ("ACTC",),
-            ("ACTC001",),
+            ("ACTI",),
+            ("ACTI001",),
             {
-                "ACTC002",
-                "ACTC003",
-                "ACTC004",
-                "ACTC005",
+                "ACTI002",
+                "ACTI003",
             },
             id="specific-exclude-beats-group-include",
         ),
@@ -126,13 +127,13 @@ def test_selection_resolves(
             id="bare-act-is-not-a-selector",
         ),
         pytest.param(
-            ("no-else",),
+            ("no-if-else",),
             (),
             id="rule-name-is-not-a-selector",
         ),
         pytest.param(
-            ("ACTC001",),
-            ("ACTC001",),
+            ("ACTI001",),
+            ("ACTI001",),
             id="same-selector-in-both-lists",
         ),
         pytest.param(
@@ -141,8 +142,8 @@ def test_selection_resolves(
             id="selector-twice-in-one-list",
         ),
         pytest.param(
-            ("ACTC",),
-            ("ACTC001", "ACTC002", "ACTC003", "ACTC004", "ACTC005"),
+            ("ACTT",),
+            ("ACTT001", "ACTT002"),
             id="selection-enables-nothing",
         ),
     ],
@@ -163,13 +164,13 @@ def test_check_reports_only_enabled_rules() -> None:
         for violation in find_violations(
             source,
             frozenset({
-                "ACTC001",
+                "ACTI001",
             }),
         )
     ]
 
     assert codes == [
-        "ACTC001",
+        "ACTI001",
     ]
 
 
@@ -223,9 +224,9 @@ def test_disabled_rule_contributes_no_fixes(disabled: RuleCode, source: str, exp
         ),
         pytest.param(
             frozenset({
-                "ACTC004",
+                "ACTT002",
             }),
-            "ACTC004",
+            "ACTT002",
             id="minority-inclusion-renders-as-list",
         ),
     ],
@@ -237,14 +238,14 @@ def test_selection_description(enabled: frozenset[RuleCode], expected: str) -> N
 @pytest.mark.integration
 def test_config_file_lists_are_loaded(tmp_path: Path) -> None:
     (tmp_path / "well-actually.toml").write_text(
-        'exclude = ["__ALL__"]\ninclude = ["ACTC004"]\n',
+        'exclude = ["__ALL__"]\ninclude = ["ACTT002"]\n',
         encoding="utf-8",
     )
 
     loaded = load_selection(tmp_path, (), ())
 
     assert loaded.enabled == {
-        "ACTC004",
+        "ACTT002",
     }
     assert loaded.config_file_found
 
@@ -273,7 +274,7 @@ def test_cli_lists_replace_config_lists(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_unknown_config_key_is_a_hard_error(tmp_path: Path) -> None:
-    (tmp_path / "well-actually.toml").write_text('select = ["ACTC"]\n', encoding="utf-8")
+    (tmp_path / "well-actually.toml").write_text('select = ["ACTI"]\n', encoding="utf-8")
 
     with pytest.raises(SelectionError, match="unknown keys"):
         load_selection(tmp_path, (), ())

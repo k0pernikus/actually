@@ -22,7 +22,11 @@ flat and relocates the anchor to the joined line's end. A stale
 anchor — its chain shrunk below two
 invocations — is stripped so the directive cannot rot. Chains carrying foreign comments or
 multiline arguments are reported for human layout instead, and chains inside f-string
-interpolations are exempt.
+interpolations are exempt. This wanted state is a deliberate, temporary middle-ground — a best
+effort to verticalize as far as ruff will preserve without fighting the formatter, not the
+one-node-per-line ideal: an attribute between two calls rides with its call and a short chain
+keeps its base parens, because otherwise ruff re-joins them. `ruff format` exposes no toggle to
+relax this; a native fluent-chain control (astral-sh/ruff#8598) would retire the compromise.
 
 ## Banned
 

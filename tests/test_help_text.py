@@ -40,14 +40,14 @@ def _rule(code: RuleCode, name: RuleName, group: RuleGroup, fix: FixCapability, 
     [
         pytest.param(
             frozenset({
-                "ACTC002",
+                "ACTI002",
                 "ACTL002",
                 "ACTR001",
             }),
             (
                 f"{FULL_FIX_HEADER}\n  ACTR001 blank-before-return: a stacked return",
                 f"{PARTIAL_FIX_HEADER}\n  ACTL002 one-element-per-line: a crowded literal",
-                f"{CHECK_ONLY_HEADER}\n  ACTC002 no-elif: an elif chain",
+                f"{CHECK_ONLY_HEADER}\n  ACTI002 no-elif: an elif chain",
             ),
             (NO_AUTOFIX_NOTICE,),
             id="full-selection-partitions-by-fix-capability",
@@ -59,7 +59,7 @@ def _rule(code: RuleCode, name: RuleName, group: RuleGroup, fix: FixCapability, 
             (f"{FULL_FIX_HEADER}\n  ACTR001 blank-before-return: a stacked return",),
             (
                 "ACTL002",
-                "ACTC002",
+                "ACTI002",
                 PARTIAL_FIX_HEADER,
                 CHECK_ONLY_HEADER,
                 NO_AUTOFIX_NOTICE,
@@ -68,11 +68,11 @@ def _rule(code: RuleCode, name: RuleName, group: RuleGroup, fix: FixCapability, 
         ),
         pytest.param(
             frozenset({
-                "ACTC002",
+                "ACTI002",
             }),
             (
                 NO_AUTOFIX_NOTICE,
-                f"{CHECK_ONLY_HEADER}\n  ACTC002 no-elif: an elif chain",
+                f"{CHECK_ONLY_HEADER}\n  ACTI002 no-elif: an elif chain",
             ),
             (
                 FULL_FIX_HEADER,
@@ -91,7 +91,7 @@ def test_format_help_names_exactly_the_active_changeset(
 ) -> None:
     catalog = RuleCatalog(
         active=(
-            _rule("ACTC002", "no-elif", "actually-conditionals", "check-only", "an elif chain"),
+            _rule("ACTI002", "no-elif", "actually-if-conditions", "check-only", "an elif chain"),
             _rule("ACTL002", "one-element-per-line", "actually-literals", "partial", "a crowded literal"),
             _rule("ACTR001", "blank-before-return", "actually-returns", "full", "a stacked return"),
         ),
@@ -110,7 +110,7 @@ def test_format_help_names_exactly_the_active_changeset(
 def test_check_help_lists_exactly_the_enabled_rules() -> None:
     catalog = RuleCatalog(
         active=(
-            _rule("ACTC002", "no-elif", "actually-conditionals", "check-only", "an elif chain"),
+            _rule("ACTI002", "no-elif", "actually-if-conditions", "check-only", "an elif chain"),
             _rule("ACTL001", "trailing-comma", "actually-literals", "full", "a missing trailing comma"),
         ),
         retired=(),
@@ -118,14 +118,14 @@ def test_check_help_lists_exactly_the_enabled_rules() -> None:
 
     rendered = check_help(
         frozenset({
-            "ACTC002",
+            "ACTI002",
         }),
         catalog,
-        "Found well-actually.toml. Running with: ACTC002",
+        "Found well-actually.toml. Running with: ACTI002",
     )
 
-    assert "Found well-actually.toml. Running with: ACTC002" in rendered
-    assert f"{CHECKED_RULES_HEADER}\n  ACTC002 no-elif: an elif chain" in rendered
+    assert "Found well-actually.toml. Running with: ACTI002" in rendered
+    assert f"{CHECKED_RULES_HEADER}\n  ACTI002 no-elif: an elif chain" in rendered
     assert "ACTL001" not in rendered
 
 

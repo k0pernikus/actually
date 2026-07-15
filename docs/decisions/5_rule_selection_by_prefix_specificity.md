@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Created:** 2026-07-13
-**Updated:** 2026-07-13
+**Updated:** 2026-07-15
 **See also:** [ADR 1](1_ruff_style_rule_codes_in_named_groups.md)
 
 ## Context
@@ -22,7 +22,7 @@
   tree, no merging; the invocation declares what it found and the resolved selection on
   stderr (`Found well-actually.toml. Running with: …` / `No well-actually.toml found,
   running with default '__ALL__'`), so the active subset is never ambient
-- entries are rule codes (`ACTC004`), group prefixes (`ACTC`), or the `__ALL__` all-group —
+- entries are rule codes (`ACTI001`), group prefixes (`ACTI`), or the `__ALL__` all-group —
   the three-taxon vocabulary of [ADR 6](6_selector_taxonomy_rule_group_all.md); never rule
   names or group display names
 - untrusted strings from CLI and TOML narrow through one boundary lookup
@@ -41,14 +41,14 @@
       check nothing
     - an entry outside the selector taxonomy of
       [ADR 6](6_selector_taxonomy_rule_group_all.md) — a registered rule code, a registered
-      group prefix, or `__ALL__`; a substring like `ACT` or `ACTC00` is a prefix of registered
+      group prefix, or `__ALL__`; a substring like `ACT` or `ACTI00` is a prefix of registered
       codes yet still fails — a typo must never silently become a no-op
     - a resolved selection that enables zero rules
 - `format` obeys the same selection: a disabled rule contributes neither reports nor fixes
 
 ## Consequences
 
-- every subset is expressible: `exclude = ["__ALL__"]` + `include = ["ACTC004"]` runs one
+- every subset is expressible: `exclude = ["__ALL__"]` + `include = ["ACTI001"]` runs one
   rule; `exclude = ["ACTL"]` drops a group; `exclude = ["ACTL"]` +
   `include = ["__ALL__", "ACTL001"]` drops a group but keeps one member
 - selection failures surface as usage errors naming the valid vocabulary

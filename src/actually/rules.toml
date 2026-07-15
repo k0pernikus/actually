@@ -1,20 +1,21 @@
 [[rules]]
-code = "ACTC001"
-name = "no-else"
-group = "actually-conditionals"
+code = "ACTI001"
+name = "no-if-else"
+group = "actually-if-conditions"
 status = "stable"
-fix = "partial"
-summary = "`else` on `if`, and the completion clauses on `for`, `while`, `try`"
+summary = "`else` on an `if` — flatten to guard clauses with early exits"
+ruff_conflicts = [
+  { rule = "PLR5501", reason = "PLR5501 (collapsible-else-if) collapses `else:` wrapping an `if` into `elif … else`, keeping an `else` on the `if` chain this rule forbids" },
+]
 rationale = '''
-An `else` clause hides the happy path one indent deeper and forces the reader to hold both
-branches open. The completion clauses on `for`, `while`, and `try` are worse: they overload
-`else` to mean "ran without `break`" or "raised no exception", putting the normal flow in the
-branch that reads as exceptional everywhere else in the language. Invert the condition into a
-guard clause and return early; dedent the continuation after `except`. `format` rewrites the
-`try`/`except`/`else` case automatically when every `except` body already exits — the other
-forms are reported for human refactoring. The `else` keyword inside a conditional expression
-is NOT this rule's target: a flat ternary (`x = "a" if cond else "b"`) stays valid — its
-limits are ternary-not-nested (ACTC003) and ternary-not-empty (ACTC004).
+An `else` on an `if` hides the happy path one indent deeper and forces the reader to hold both
+branches open at once. Invert the condition into a guard clause and exit early — `return`,
+`raise`, `continue`, `break` — so the primary flow stays at the top indent and each decision
+reads on its own. The `else` keyword inside a conditional expression is NOT this rule's target:
+a flat ternary (`x = "a" if cond else "b"`) stays valid — its limits are ternary-not-nested
+(ACTT001) and ternary-not-empty (ACTT002). The completion `else` on `for`, `while`, and `try`
+is a different overload, banned separately by no-for-else (ACTE002), no-while-else (ACTE003),
+and no-try-else (ACTE001).
 '''
 banned = '''
 def describe(config):
@@ -32,18 +33,21 @@ def describe(config):
 '''
 
 [[rules]]
-code = "ACTC002"
+code = "ACTI002"
 name = "no-elif"
-group = "actually-conditionals"
+group = "actually-if-conditions"
 status = "stable"
 summary = "`elif` — flatten to guard clauses with early exits"
+ruff_conflicts = [
+  { rule = "PLR5501", reason = "PLR5501 (collapsible-else-if) rewrites `else: if` into an `elif`, which this rule forbids" },
+]
 rationale = '''
 An `elif` chain welds N decisions into one compound statement: every arm hangs off the first
 `if`, the reader holds the whole ladder open, and inserting or reordering a case edits the
 middle of the construct. The fixpoint is flat guard clauses — multiple `if` statements, each
 with an early `return`, `raise`, `continue`, or `break` — nothing more: every decision stands
 alone and appending a case is appending a statement. This rule bans exactly `elif`. When the
-flattened arms all compare one shared subject, `prefer-match` (ACTC005) then escalates the
+flattened arms all compare one shared subject, `prefer-match` (ACTI003) then escalates the
 chain to a `match` statement — that judgement belongs to that rule, never to this one.
 '''
 banned = '''
@@ -65,16 +69,16 @@ def access_level(user, resource):
 '''
 
 [[rules]]
-code = "ACTC003"
+code = "ACTT001"
 name = "ternary-not-nested"
-group = "actually-conditionals"
+group = "actually-ternaries"
 status = "stable"
 summary = "a ternary inside another ternary's arm (`elif` in expression form)"
 rationale = '''
 A ternary is the one permitted conditional expression, and only flat: a ternary nested inside
 either arm is an `elif` chain in expression form, with reading order collapsing at exactly the
 point where clarity matters most. Refactor to guard clauses — or, when the arms dispatch on a
-single subject, one `match` statement (ACTC005).
+single subject, one `match` statement (ACTI003).
 '''
 banned = '''
 action = "beach" if sunny else "sleep" if night else "home"
@@ -91,11 +95,14 @@ def action(sunny, night):
 '''
 
 [[rules]]
-code = "ACTC004"
+code = "ACTT002"
 name = "ternary-not-empty"
-group = "actually-conditionals"
+group = "actually-ternaries"
 status = "unstable"
 summary = "a degenerate ternary arm (`None`, `\"\"`, empty container) — conditional inclusion in disguise"
+ruff_conflicts = [
+  { rule = "SIM108", reason = "SIM108 (if-else-block-instead-of-if-exp) rewrites an `if`/`else` assigning in both branches into a ternary; a `None`/empty branch becomes the degenerate arm this rule forbids" },
+]
 rationale = '''
 An arm that exists only for conditional inclusion — `None`, an empty string, an empty container
 literal — is a hidden `else` smuggling an absent case into the binding: the result is a
@@ -115,9 +122,9 @@ def parsed(raw):
 '''
 
 [[rules]]
-code = "ACTC005"
+code = "ACTI003"
 name = "prefer-match"
-group = "actually-conditionals"
+group = "actually-if-conditions"
 status = "unstable"
 summary = "two or more consecutive conditional returns comparing one shared subject, closed by a terminal return or raise — dispatch written as control flow"
 rationale = '''
@@ -129,7 +136,7 @@ explicit default arm, the scrutinee evaluated once. Or-patterns (`case 403 | 409
 sharing a body, class patterns (`case str():`) dispatch on type, and the default arm fails
 loud — reaching for `dict.get(key, default)` instead trades the loud unknown-value failure
 for a silent wrong answer. The rule fires only on a genuinely shared scrutinee — this is the
-second pass after `no-elif` (ACTC002) has flattened a chain to guards. Chains of independent
+second pass after `no-elif` (ACTI002) has flattened a chain to guards. Chains of independent
 predicates are guard clauses
 and STAY guard clauses — fabricating a scrutinee to force a `match`
 (`match found, description == ALL:` with positional `case True, _:` arms) is the same if-chain
@@ -171,6 +178,103 @@ def http_label(status):
 '''
 
 [[rules]]
+code = "ACTE001"
+name = "no-try-else"
+group = "actually-completion-clauses"
+status = "stable"
+fix = "partial"
+summary = "`else` on `try` — dedent the continuation after the `except` clauses"
+ruff_conflicts = [
+  { rule = "TRY300", reason = "TRY300 (try-consider-else) recommends moving a `return` out of the `try` body into an `else:` clause — the completion clause this rule forbids" },
+]
+rationale = '''
+The `else` clause on `try`/`except` overloads `else` to mean "no exception was raised", putting
+the normal, expected flow in the branch that reads as exceptional everywhere else in the
+language. Dedent the continuation after the `except` clauses into straight-line code: it is
+reached only when the `try` body raised nothing, which is exactly what following the block
+already means. `format` rewrites this automatically when every `except` body exits (`return`,
+`raise`, `continue`, `break`); when one falls through, the dedent would change behaviour, so it
+is reported for human refactoring instead.
+'''
+banned = '''
+def describe(path):
+    try:
+        config = load(path)
+    except ParseError:
+        return "invalid"
+    else:
+        return describe(config)
+'''
+wanted = '''
+def describe(path):
+    try:
+        config = load(path)
+    except ParseError:
+        return "invalid"
+
+    return describe(config)
+'''
+
+[[rules]]
+code = "ACTE002"
+name = "no-for-else"
+group = "actually-completion-clauses"
+status = "stable"
+summary = "`else` on `for` — the loop-completion clause overloads `else`"
+rationale = '''
+The `else` clause on a `for` loop runs only when the loop finished without hitting a `break` —
+overloading `else` to mean "completed", so the normal completion path sits in the branch that
+reads as exceptional. Extract the search into a helper that returns early on a match; the
+function tail then reads as the natural "nothing matched" case, with no `else` required.
+'''
+banned = '''
+def first_even(numbers):
+    for number in numbers:
+        if number % 2 == 0:
+            return number
+    else:
+        return None
+'''
+wanted = '''
+def first_even(numbers):
+    for number in numbers:
+        if number % 2 == 0:
+            return number
+
+    return None
+'''
+
+[[rules]]
+code = "ACTE003"
+name = "no-while-else"
+group = "actually-completion-clauses"
+status = "stable"
+summary = "`else` on `while` — the loop-completion clause overloads `else`"
+rationale = '''
+The `else` clause on a `while` loop runs only when the condition became false without a
+`break` — the same overload as `for`/`else`, hiding the normal completion path in the
+exceptional-looking branch. Restructure so the after-loop code follows the loop directly: a
+`break`-search becomes a guard that returns on the match, with the fall-through as the
+completion case.
+'''
+banned = '''
+def scan(source, target):
+    while source.has_next():
+        if source.peek() == target:
+            return source.take()
+    else:
+        return None
+'''
+wanted = '''
+def scan(source, target):
+    while source.has_next():
+        if source.peek() == target:
+            return source.take()
+
+    return None
+'''
+
+[[rules]]
 code = "ACTH001"
 name = "multi-line-chain"
 group = "actually-chains"
@@ -195,7 +299,11 @@ flat and relocates the anchor to the joined line's end. A stale
 anchor — its chain shrunk below two
 invocations — is stripped so the directive cannot rot. Chains carrying foreign comments or
 multiline arguments are reported for human layout instead, and chains inside f-string
-interpolations are exempt.
+interpolations are exempt. This wanted state is a deliberate, temporary middle-ground — a best
+effort to verticalize as far as ruff will preserve without fighting the formatter, not the
+one-node-per-line ideal: an attribute between two calls rides with its call and a short chain
+keeps its base parens, because otherwise ruff re-joins them. `ruff format` exposes no toggle to
+relax this; a native fluent-chain control (astral-sh/ruff#8598) would retire the compromise.
 '''
 banned = '''
 command = CommandLine.of("git").subcommand("config").argument(key)

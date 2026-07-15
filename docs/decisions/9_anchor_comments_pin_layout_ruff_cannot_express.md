@@ -52,6 +52,12 @@
 
 ## Consequences
 
+- the wanted state is a deliberate, temporary middle-ground — multiline as far as ruff preserves
+  without fighting the formatter, not the one-node-per-line ideal: an attribute between two calls
+  rides with its call and a short chain keeps its base parens, because ruff re-joins them
+  otherwise, and `ruff format` exposes no per-behavior toggle to relax it. A ruff-incompatible
+  mode was considered and rejected: it would fight the formatter and oscillate under any later
+  `ruff format`
 - the first rule whose fix emits and removes comments; the anchor is a machine-managed tool
   directive, not prose — consumers with zero-comment policies classify it with their other tool
   directives (`# noqa`, `# shellcheck`)

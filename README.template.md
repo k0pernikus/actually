@@ -4,13 +4,18 @@ Well, *actually*, your code should read like this.
 
 `actually` is a highly opinionated Python linter and formatter built on
 [ast-grep](https://ast-grep.github.io/). It enforces a guard-clause style through rules with
-ruff-style stable codes, grouped by language construct
+ruff-style codes grouped by language construct
 ([ADR 1](docs/decisions/1_ruff_style_rule_codes_in_named_groups.md)). Every rule is checkable;
 the auto-fix column marks what `format` can rewrite. Each rule links to its documentation page
 with rationale and a banned/wanted example pair — generated from
 [`rules.toml`](src/actually/rules.toml) and validated by the linter itself
 ([ADR 2](docs/decisions/2_rule_docs_generated_from_rules_toml.md)). `actually rules --list`
 prints the same catalog in the terminal, docs links included:
+
+> **Note:** Rule codes, names, and groups are NOT stable while `actually` is pre-1.0 — the
+> taxonomy is still being discovered, so any of them may change with breaking changes at will
+> ([ADR 11](docs/decisions/11_rule_identifiers_unstable_pre_1_0.md)). Pin a version; do not
+> depend on a specific code or name holding across releases.
 
 {{rules_tables}}
 
@@ -86,7 +91,7 @@ never a matter of guessing.
 exactly the rules the invocation will enforce — split for `format` by what it can rewrite —
 never overselling nor underselling the changeset, whatever order the selection flags and
 `--help` are typed in ([ADR 8](docs/decisions/8_help_reflects_the_active_selection.md)).
-Entries are rule codes (`ACTC004`), group prefixes (`ACTC`), or `__ALL__` — the special
+Entries are rule codes (`ACTT002`), group prefixes (`ACTI`), or `__ALL__` — the special
 all-encompassing group ([ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md)). The
 longest match per rule wins; ties go to `exclude`. `include` defaults to `__ALL__`, so
 exclude-only configs just work:
@@ -99,7 +104,7 @@ Any subset is expressible — one rule only:
 
 ```toml
 exclude = ["__ALL__"]
-include = ["ACTC004"]
+include = ["ACTT002"]
 ```
 
 or a group off with one member kept:
@@ -171,7 +176,7 @@ uv run pytest
 and stages them. Edit the sources, never the outputs.
 
 [`tests/valid-code-checks/allowed/`](tests/valid-code-checks/allowed/) holds the valid-case corpora,
-one directory per rule selector (`ACTH001/`, `ACTC/`, `__ALL__/` — any selector
+one directory per rule selector (`ACTH001/`, `ACTI/`, `__ALL__/` — any selector
 [ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md) registers): real Python files the
 checker MUST stay silent on and `format` MUST leave byte-identical under exactly that selection.
 A per-rule directory pins its rule's allowed shapes atomically, against that rule alone; `__ALL__/` pins the

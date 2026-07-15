@@ -133,11 +133,26 @@ def _render_rule_page(rule: RuleMetadata) -> str:
         rule.wanted,
         "```",
         "",
+        *_conflicts_block(rule),
         PAGE_NOTICE,
         "",
     ]
 
     return "\n".join(parts)
+
+
+def _conflicts_block(rule: RuleMetadata) -> list[str]:
+    if not rule.ruff_conflicts:
+        return []
+
+    items = [f"- `{conflict.rule}` — {conflict.reason}" for conflict in rule.ruff_conflicts]
+
+    return [
+        "## Conflicts with ruff",
+        "",
+        *items,
+        "",
+    ]
 
 
 def _assert_fresh(rendered_readme: str, pages: dict[Path, str]) -> None:

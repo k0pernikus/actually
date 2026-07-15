@@ -16,51 +16,58 @@ def outline(source: str) -> list[tuple[str, int]]:
         pytest.param(
             "def f(x):\n    if x:\n        return 1\n    else:\n        return 2\n",
             [
-                ("ACTC001", 4),
+                ("ACTI001", 4),
             ],
             id="else-on-if",
         ),
         pytest.param(
             "for i in range(3):\n    use(i)\nelse:\n    done()\n",
             [
-                ("ACTC001", 3),
+                ("ACTE002", 3),
             ],
             id="completion-else-on-for",
         ),
         pytest.param(
+            "while running():\n    step()\nelse:\n    done()\n",
+            [
+                ("ACTE003", 3),
+            ],
+            id="completion-else-on-while",
+        ),
+        pytest.param(
             "def f(x):\n    if x == 1:\n        return 1\n    elif x == 2:\n        return 2\n",
             [
-                ("ACTC002", 4),
+                ("ACTI002", 4),
             ],
             id="elif",
         ),
         pytest.param(
             "x = (1 if a else 2) if b else 3\n",
             [
-                ("ACTC003", 1),
+                ("ACTT001", 1),
             ],
             id="nested-ternary",
         ),
         pytest.param(
             "x = [y] if y else []\n",
             [
-                ("ACTC004", 1),
                 ("ACTL001", 1),
                 ("ACTL002", 1),
+                ("ACTT002", 1),
             ],
             id="empty-list-arm-co-reports-literal-layout",
         ),
         pytest.param(
             "def f(status):\n    if status == 'a':\n        return 1\n\n    if status == 'b':\n        return 2\n\n    raise ValueError(status)\n",
             [
-                ("ACTC005", 2),
+                ("ACTI003", 2),
             ],
             id="same-scrutinee-equality-run-with-terminal-raise",
         ),
         pytest.param(
             "def f(arm):\n    if arm.kind() == 'none':\n        return True\n\n    if arm.kind() == 'string':\n        return is_empty(arm)\n\n    return False\n",
             [
-                ("ACTC005", 2),
+                ("ACTI003", 2),
             ],
             id="shared-scrutinee-call-run",
         ),
@@ -109,7 +116,7 @@ def test_else_on_try_names_the_construct() -> None:
     violations = find_violations(source)
 
     assert outline(source) == [
-        ("ACTC001", 6),
+        ("ACTE001", 6),
     ]
     assert "`try`" in violations[0].message
 
@@ -187,7 +194,7 @@ def test_valid_ternary_is_clean(source: str) -> None:
 )
 def test_degenerate_ternary_arm_is_flagged(source: str) -> None:
     assert outline(source) == [
-        ("ACTC004", 1),
+        ("ACTT002", 1),
     ]
 
 

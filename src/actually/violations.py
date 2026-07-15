@@ -3,11 +3,14 @@ from typing import Literal, get_args
 
 
 RuleCode = Literal[
-    "ACTC001",
-    "ACTC002",
-    "ACTC003",
-    "ACTC004",
-    "ACTC005",
+    "ACTI001",
+    "ACTI002",
+    "ACTI003",
+    "ACTT001",
+    "ACTT002",
+    "ACTE001",
+    "ACTE002",
+    "ACTE003",
     "ACTH001",
     "ACTL001",
     "ACTL002",
@@ -16,11 +19,14 @@ RuleCode = Literal[
 ]
 
 RuleName = Literal[
-    "no-else",
+    "no-if-else",
     "no-elif",
+    "prefer-match",
     "ternary-not-nested",
     "ternary-not-empty",
-    "prefer-match",
+    "no-try-else",
+    "no-for-else",
+    "no-while-else",
     "multi-line-chain",
     "trailing-comma",
     "one-element-per-line",
@@ -30,9 +36,11 @@ RuleName = Literal[
 
 RuleGroup = Literal[
     "actually-chains",
-    "actually-conditionals",
+    "actually-completion-clauses",
+    "actually-if-conditions",
     "actually-literals",
     "actually-returns",
+    "actually-ternaries",
 ]
 
 
@@ -43,11 +51,14 @@ class Rule:
     group: RuleGroup
 
 
-NO_ELSE = Rule(code="ACTC001", name="no-else", group="actually-conditionals")
-NO_ELIF = Rule(code="ACTC002", name="no-elif", group="actually-conditionals")
-TERNARY_NOT_NESTED = Rule(code="ACTC003", name="ternary-not-nested", group="actually-conditionals")
-TERNARY_NOT_EMPTY = Rule(code="ACTC004", name="ternary-not-empty", group="actually-conditionals")
-PREFER_MATCH = Rule(code="ACTC005", name="prefer-match", group="actually-conditionals")
+NO_IF_ELSE = Rule(code="ACTI001", name="no-if-else", group="actually-if-conditions")
+NO_ELIF = Rule(code="ACTI002", name="no-elif", group="actually-if-conditions")
+PREFER_MATCH = Rule(code="ACTI003", name="prefer-match", group="actually-if-conditions")
+TERNARY_NOT_NESTED = Rule(code="ACTT001", name="ternary-not-nested", group="actually-ternaries")
+TERNARY_NOT_EMPTY = Rule(code="ACTT002", name="ternary-not-empty", group="actually-ternaries")
+NO_TRY_ELSE = Rule(code="ACTE001", name="no-try-else", group="actually-completion-clauses")
+NO_FOR_ELSE = Rule(code="ACTE002", name="no-for-else", group="actually-completion-clauses")
+NO_WHILE_ELSE = Rule(code="ACTE003", name="no-while-else", group="actually-completion-clauses")
 MULTI_LINE_CHAIN = Rule(code="ACTH001", name="multi-line-chain", group="actually-chains")
 TRAILING_COMMA = Rule(code="ACTL001", name="trailing-comma", group="actually-literals")
 ONE_ELEMENT_PER_LINE = Rule(code="ACTL002", name="one-element-per-line", group="actually-literals")
@@ -55,11 +66,14 @@ BLANK_BEFORE_RETURN = Rule(code="ACTR001", name="blank-before-return", group="ac
 BLANK_AFTER_RETURN = Rule(code="ACTR002", name="blank-after-return", group="actually-returns")
 
 RULES: tuple[Rule, ...] = (
-    NO_ELSE,
+    NO_IF_ELSE,
     NO_ELIF,
+    PREFER_MATCH,
     TERNARY_NOT_NESTED,
     TERNARY_NOT_EMPTY,
-    PREFER_MATCH,
+    NO_TRY_ELSE,
+    NO_FOR_ELSE,
+    NO_WHILE_ELSE,
     MULTI_LINE_CHAIN,
     TRAILING_COMMA,
     ONE_ELEMENT_PER_LINE,
@@ -71,10 +85,12 @@ RULES: tuple[Rule, ...] = (
 ALL_RULE_CODES: frozenset[RuleCode] = frozenset(rule.code for rule in RULES)
 
 RuleGroupPrefix = Literal[
-    "ACTC",
+    "ACTE",
     "ACTH",
+    "ACTI",
     "ACTL",
     "ACTR",
+    "ACTT",
 ]
 
 AllGroup = Literal["__ALL__"]
@@ -84,10 +100,12 @@ RuleSelector = AllGroup | RuleGroupPrefix | RuleCode
 ALL_GROUP: AllGroup = "__ALL__"
 
 RULE_GROUP_BY_PREFIX: dict[RuleGroupPrefix, RuleGroup] = {
-    "ACTC": "actually-conditionals",
+    "ACTE": "actually-completion-clauses",
     "ACTH": "actually-chains",
+    "ACTI": "actually-if-conditions",
     "ACTL": "actually-literals",
     "ACTR": "actually-returns",
+    "ACTT": "actually-ternaries",
 }
 
 RULE_SELECTOR_BY_VALUE: dict[str, RuleSelector] = {

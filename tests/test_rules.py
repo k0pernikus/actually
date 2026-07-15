@@ -8,7 +8,7 @@ pytestmark = pytest.mark.unit
 
 
 def test_rule_docs_url_is_the_github_page() -> None:
-    assert rule_docs_url("no-else") == ("https://github.com/k0pernikus/actually/blob/main/rules/no-else.md")
+    assert rule_docs_url("no-if-else") == ("https://github.com/k0pernikus/actually/blob/main/rules/no-if-else.md")
 
 
 @pytest.mark.integration

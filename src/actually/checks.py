@@ -12,22 +12,33 @@ from actually.violations import (
     BLANK_BEFORE_RETURN,
     MULTI_LINE_CHAIN,
     NO_ELIF,
-    NO_ELSE,
+    NO_FOR_ELSE,
+    NO_IF_ELSE,
+    NO_TRY_ELSE,
+    NO_WHILE_ELSE,
     ONE_ELEMENT_PER_LINE,
     PREFER_MATCH,
     TERNARY_NOT_EMPTY,
     TERNARY_NOT_NESTED,
     TRAILING_COMMA,
+    Rule,
     RuleCode,
     Violation,
 )
 
 
-ELSE_CONSTRUCT_BY_PARENT_KIND = {
-    "for_statement": "for",
-    "if_statement": "if",
-    "try_statement": "try",
-    "while_statement": "while",
+ELSE_RULE_BY_PARENT_KIND: dict[str, Rule] = {
+    "for_statement": NO_FOR_ELSE,
+    "if_statement": NO_IF_ELSE,
+    "try_statement": NO_TRY_ELSE,
+    "while_statement": NO_WHILE_ELSE,
+}
+
+ELSE_MESSAGE_BY_PARENT_KIND = {
+    "for_statement": "banned `else` on `for` — extract the search to a helper that returns early on a match",
+    "if_statement": "banned `else` on `if` — restructure to guard clauses",
+    "try_statement": "banned `else` on `try` — dedent the continuation after the `except` clauses",
+    "while_statement": "banned `else` on `while` — restructure so the completion path is not an `else`",
 }
 
 EMPTY_CONTAINER_KINDS = frozenset(
@@ -85,13 +96,17 @@ def find_violations(
 
 
 def _else_violations(root: SgNode) -> tuple[Violation, ...]:
-    return tuple(
-        Violation(
-            rule=NO_ELSE,
-            line=_report_line(clause),
-            message=f"banned `else` clause on `{ELSE_CONSTRUCT_BY_PARENT_KIND[_parent_of(clause).kind()]}` — restructure to guard clauses",
-        )
-        for clause in root.find_all(kind="else_clause")
+    return tuple(_else_violation(clause) for clause in root.find_all(kind="else_clause"))
+
+
+def _else_violation(clause: SgNode) -> Violation:
+    parent = _parent_of(clause)
+    parent_kind = parent.kind()
+
+    return Violation(
+        rule=ELSE_RULE_BY_PARENT_KIND[parent_kind],
+        line=_report_line(clause),
+        message=ELSE_MESSAGE_BY_PARENT_KIND[parent_kind],
     )
 
 

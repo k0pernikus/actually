@@ -2,11 +2,11 @@
 
 **Status:** Accepted
 **Created:** 2026-07-13
-**Updated:** 2026-07-13
+**Updated:** 2026-07-15
 
 ## Context
 
-- the ACTC004 false-positive fix accumulated five near-identical tests, each one input against
+- the ternary-not-empty false-positive fix accumulated five near-identical tests, each one input against
   the same clean-verdict assertion — the suite grows a function per scenario while the pinned
   property stays singular
 - pytest's `parametrize` (PHPUnit vocabulary: data provider) expresses exactly this: one named

@@ -5,7 +5,7 @@ Well, *actually*, your code should read like this.
 
 `actually` is a highly opinionated Python linter and formatter built on
 [ast-grep](https://ast-grep.github.io/). It enforces a guard-clause style through rules with
-ruff-style stable codes, grouped by language construct
+ruff-style codes grouped by language construct
 ([ADR 1](docs/decisions/1_ruff_style_rule_codes_in_named_groups.md)). Every rule is checkable;
 the auto-fix column marks what `format` can rewrite. Each rule links to its documentation page
 with rationale and a banned/wanted example pair — generated from
@@ -13,21 +13,32 @@ with rationale and a banned/wanted example pair — generated from
 ([ADR 2](docs/decisions/2_rule_docs_generated_from_rules_toml.md)). `actually rules --list`
 prints the same catalog in the terminal, docs links included:
 
+> **Note:** Rule codes, names, and groups are NOT stable while `actually` is pre-1.0 — the
+> taxonomy is still being discovered, so any of them may change with breaking changes at will
+> ([ADR 11](docs/decisions/11_rule_identifiers_unstable_pre_1_0.md)). Pin a version; do not
+> depend on a specific code or name holding across releases.
+
 ## actually-chains
 
 | Code | Rule | Status | Auto-fix | What it enforces |
 |:---|:---|:---|:---|:---|
 | ACTH001 | [multi-line-chain](rules/multi-line-chain.md) | unstable | partial | a chain of two or more invocations not one call per line under a `# well-actually: multi-line` anchor |
 
-## actually-conditionals
+## actually-completion-clauses
 
 | Code | Rule | Status | Auto-fix | What it enforces |
 |:---|:---|:---|:---|:---|
-| ACTC001 | [no-else](rules/no-else.md) | stable | partial | `else` on `if`, and the completion clauses on `for`, `while`, `try` |
-| ACTC002 | [no-elif](rules/no-elif.md) | stable | no | `elif` — flatten to guard clauses with early exits |
-| ACTC003 | [ternary-not-nested](rules/ternary-not-nested.md) | stable | no | a ternary inside another ternary's arm (`elif` in expression form) |
-| ACTC004 | [ternary-not-empty](rules/ternary-not-empty.md) | unstable | no | a degenerate ternary arm (`None`, `""`, empty container) — conditional inclusion in disguise |
-| ACTC005 | [prefer-match](rules/prefer-match.md) | unstable | no | two or more consecutive conditional returns comparing one shared subject, closed by a terminal return or raise — dispatch written as control flow |
+| ACTE001 | [no-try-else](rules/no-try-else.md) | stable | partial | `else` on `try` — dedent the continuation after the `except` clauses |
+| ACTE002 | [no-for-else](rules/no-for-else.md) | stable | no | `else` on `for` — the loop-completion clause overloads `else` |
+| ACTE003 | [no-while-else](rules/no-while-else.md) | stable | no | `else` on `while` — the loop-completion clause overloads `else` |
+
+## actually-if-conditions
+
+| Code | Rule | Status | Auto-fix | What it enforces |
+|:---|:---|:---|:---|:---|
+| ACTI001 | [no-if-else](rules/no-if-else.md) | stable | no | `else` on an `if` — flatten to guard clauses with early exits |
+| ACTI002 | [no-elif](rules/no-elif.md) | stable | no | `elif` — flatten to guard clauses with early exits |
+| ACTI003 | [prefer-match](rules/prefer-match.md) | unstable | no | two or more consecutive conditional returns comparing one shared subject, closed by a terminal return or raise — dispatch written as control flow |
 
 ## actually-literals
 
@@ -42,6 +53,13 @@ prints the same catalog in the terminal, docs links included:
 |:---|:---|:---|:---|:---|
 | ACTR001 | [blank-before-return](rules/blank-before-return.md) | stable | yes | a `return` stacked directly under other statements in its block |
 | ACTR002 | [blank-after-return](rules/blank-after-return.md) | stable | yes | code directly under a `return` line |
+
+## actually-ternaries
+
+| Code | Rule | Status | Auto-fix | What it enforces |
+|:---|:---|:---|:---|:---|
+| ACTT001 | [ternary-not-nested](rules/ternary-not-nested.md) | stable | no | a ternary inside another ternary's arm (`elif` in expression form) |
+| ACTT002 | [ternary-not-empty](rules/ternary-not-empty.md) | unstable | no | a degenerate ternary arm (`None`, `""`, empty container) — conditional inclusion in disguise |
 
 ## Standing on Ruff and Ty
 
@@ -115,7 +133,7 @@ never a matter of guessing.
 exactly the rules the invocation will enforce — split for `format` by what it can rewrite —
 never overselling nor underselling the changeset, whatever order the selection flags and
 `--help` are typed in ([ADR 8](docs/decisions/8_help_reflects_the_active_selection.md)).
-Entries are rule codes (`ACTC004`), group prefixes (`ACTC`), or `__ALL__` — the special
+Entries are rule codes (`ACTT002`), group prefixes (`ACTI`), or `__ALL__` — the special
 all-encompassing group ([ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md)). The
 longest match per rule wins; ties go to `exclude`. `include` defaults to `__ALL__`, so
 exclude-only configs just work:
@@ -128,7 +146,7 @@ Any subset is expressible — one rule only:
 
 ```toml
 exclude = ["__ALL__"]
-include = ["ACTC004"]
+include = ["ACTT002"]
 ```
 
 or a group off with one member kept:
@@ -200,7 +218,7 @@ uv run pytest
 and stages them. Edit the sources, never the outputs.
 
 [`tests/valid-code-checks/allowed/`](tests/valid-code-checks/allowed/) holds the valid-case corpora,
-one directory per rule selector (`ACTH001/`, `ACTC/`, `__ALL__/` — any selector
+one directory per rule selector (`ACTH001/`, `ACTI/`, `__ALL__/` — any selector
 [ADR 6](docs/decisions/6_selector_taxonomy_rule_group_all.md) registers): real Python files the
 checker MUST stay silent on and `format` MUST leave byte-identical under exactly that selection.
 A per-rule directory pins its rule's allowed shapes atomically, against that rule alone; `__ALL__/` pins the

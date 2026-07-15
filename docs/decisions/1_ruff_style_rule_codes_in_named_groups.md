@@ -2,7 +2,15 @@
 
 **Status:** Accepted
 **Created:** 2026-07-13
-**Updated:** 2026-07-14
+**Updated:** 2026-07-15
+**Superseded in part:** the "stable code" guarantee stated below is retracted while `actually`
+is pre-1.0 by [ADR 11](11_rule_identifiers_unstable_pre_1_0.md) — the `{prefix}{NNN}`-in-named-groups
+scheme stands, but codes, names, and groups may change with breaking changes until 1.0. The
+Allocation table, the reserved-letter list, and the rule-semantics snapshot below are the
+point-in-time record ADR 11's reshape has since revised — the `ACTC` conditionals group was split
+into `ACTI` (if-conditions), `ACTT` (ternaries), and `ACTE` (completion-clauses), and `no-else`
+into `no-if-else` plus `no-try-else` / `no-for-else` / `no-while-else`; `violations.py`,
+`rules.toml`, and the README hold the current taxonomy.
 
 ## Context
 
