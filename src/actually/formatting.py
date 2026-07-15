@@ -130,10 +130,10 @@ def _fix_return_spacing(source: str, enabled: frozenset[RuleCode]) -> str:
 def _safely_removable_else_clauses(source: str) -> tuple[SgNode, ...]:
     root = parsed_root(source)
 
-    return tuple(clause for clause in root.find_all(kind="else_clause") if _is_safely_removable(clause))
+    return tuple(clause for clause in root.find_all(kind="else_clause") if is_safely_removable(clause))
 
 
-def _is_safely_removable(clause: SgNode) -> bool:
+def is_safely_removable(clause: SgNode) -> bool:
     parent = clause.parent()
     if parent is None:
         return False

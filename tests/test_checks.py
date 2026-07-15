@@ -248,3 +248,62 @@ def test_return_spacing_violation_is_flagged(source: str, expected: list[tuple[s
 )
 def test_compliant_return_layout_is_clean(source: str) -> None:
     assert outline(source) == []
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        pytest.param(
+            "value = make(1).build()\n",
+            [
+                ("ACTH001", 1, True),
+            ],
+            id="fixable-chain",
+        ),
+        pytest.param(
+            "value = first().second() or third().fourth()\n",
+            [
+                ("ACTH001", 1, False),
+                ("ACTH001", 1, False),
+            ],
+            id="reported-only-chain-in-boolean",
+        ),
+        pytest.param(
+            "def f(x):\n    if x == 1:\n        return 1\n    elif x == 2:\n        return 2\n",
+            [
+                ("ACTI002", 4, False),
+            ],
+            id="check-only-elif",
+        ),
+        pytest.param(
+            "def f():\n    x = 1\n    return x\n",
+            [
+                ("ACTR001", 3, True),
+            ],
+            id="full-fix-blank-before-return",
+        ),
+        pytest.param(
+            "value = [\n    1,\n    2\n]\n",
+            [
+                ("ACTL001", 1, True),
+            ],
+            id="full-fix-trailing-comma",
+        ),
+        pytest.param(
+            "def f():\n    try:\n        x = g()\n    except E:\n        return 1\n    else:\n        return x\n",
+            [
+                ("ACTE001", 6, True),
+            ],
+            id="partial-try-else-removable",
+        ),
+        pytest.param(
+            "def f():\n    try:\n        x = g()\n    except E:\n        x = 0\n    else:\n        return x\n",
+            [
+                ("ACTE001", 6, False),
+            ],
+            id="partial-try-else-fallthrough",
+        ),
+    ],
+)
+def test_autofixable_classification(source: str, expected: list[tuple[str, int, bool]]) -> None:
+    assert [(violation.rule.code, violation.line, violation.autofixable) for violation in find_violations(source)] == expected

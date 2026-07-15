@@ -19,6 +19,7 @@ LITERAL_BRACKETS = {
 class LiteralLayoutGap:
     kind: LiteralGapKind
     literal_start_line: int
+    autofixable: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,9 +29,20 @@ class CommaInsertion:
 
 
 def literal_layout_gaps(source: str) -> tuple[LiteralLayoutGap, ...]:
-    gaps = [LiteralLayoutGap(kind=kind, literal_start_line=literal.range().start.line) for literal in _collection_literals(parsed_root(source)) for kind in _gap_kinds(literal)]
+    gaps = [
+        LiteralLayoutGap(kind=kind, literal_start_line=literal.range().start.line, autofixable=_gap_autofixable(literal, kind))
+        for literal in _collection_literals(parsed_root(source))
+        for kind in _gap_kinds(literal)
+    ]
 
     return tuple(sorted(gaps, key=lambda gap: (gap.literal_start_line, gap.kind)))
+
+
+def _gap_autofixable(literal: SgNode, kind: LiteralGapKind) -> bool:
+    if kind == "missing-trailing-comma":
+        return True
+
+    return _is_explodable(literal)
 
 
 def canonicalizable_literals(source: str) -> tuple[SgNode, ...]:

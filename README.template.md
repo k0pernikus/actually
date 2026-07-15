@@ -35,20 +35,24 @@ itself — it is its own tool with neither as a dependency; pair them in your ow
 in that order. This repo gates itself on both toolchains plus its own linter on every
 commit, which is the guarantee exercised live.
 
-Compose them as two pipelines, not one. In a **format pipeline**, run `actually format
---only-autofixable` so the reported-but-unfixable remainder — chains needing manual layout,
-literals carrying comments — is reported without exiting non-zero; plain `actually format`
-exits 1 on that remainder, so under `set -e` or a task runner `ruff format` never runs. Enforce
-the remainder in a **check pipeline**, where `actually check`'s non-zero exit is the gate:
+`format` and `check` divide the work by whether a fix is mechanical
+([ADR 12](docs/decisions/12_autofixables_are_mechanical_sanitation.md)). `format` applies every
+autofixable violation, prints only the files it changes, stays silent on a no-op, and exits 0 —
+mechanical sanitation for a commit hook or CI, never a report a human reads. `check` surfaces what
+is left: bare, it reports every violation; `--only-autofixable` narrows to the mechanical set (the
+"is it sanitized?" gate), and `--ignore-autofixable` narrows to the violations a human must
+resolve — the code-quality report, undrowned by fixables. The two filters are mutually exclusive.
 
 ```bash
-# format / fix — applies every auto-fix, never aborts on the manual-layout remainder
-actually format --only-autofixable .
+# sanitize — mechanical, silent, runs in the commit hook / CI with no human in the loop
+actually format .
 ruff format .
 
-# check / CI gate — non-zero exit enforces what format could not fix
-actually check .
-ruff check .
+# gate the sanitation — non-zero if any mechanical fix was skipped
+actually check --only-autofixable .
+
+# code-quality report — only what a human must resolve, driven to zero over time
+actually check --ignore-autofixable .
 ```
 
 ## Usage
@@ -68,7 +72,9 @@ actually check .
 actually format .
 ```
 
-`check` reports violations and exits non-zero when it finds any. Both commands lint `.py`
+`check` reports violations and exits non-zero when it finds any; `--only-autofixable` and
+`--ignore-autofixable` (mutually exclusive) scope the report to the mechanical or the manual set.
+Both commands lint `.py`
 files only; directory scans skip environment, cache, and VCS directories (`.venv`, `venv`,
 `.git`, `__pycache__`, `node_modules`, and friends) and respect `.gitignore` files — nested
 ones and negations included, matched via [pathspec](https://pypi.org/project/pathspec/)
@@ -77,22 +83,25 @@ above the scanned path, `.gitignore` files up to that repo root apply as well. G
 excludes (`core.excludesFile`, `.git/info/exclude`) are not consulted. A `.py` file passed
 explicitly is always linted.
 
-`format` rewrites files in place, then reports what it could not fix:
+`format` rewrites files in place, printing only the files it changes and staying silent on a
+no-op. It:
 
 - inserts the missing blank lines around `return`
 - dedents a `try/except/else` completion clause into straight-line code when every `except`
   body already exits (`return`, `raise`, `continue`, `break`) — when one falls through, the
-  rewrite would change behaviour, so it is reported for human refactoring instead
+  rewrite would change behaviour, so it is left for `check` instead
 - rewrites dict/list/set literals to one element per line with a trailing comma — literals
-  carrying comments or multiline elements are reported for human formatting instead
+  carrying comments or multiline elements are left for `check` instead
 - rewrites chains of two or more invocations to one call per line, anchored with
   `# well-actually: multi-line` on the base-receiver line so `ruff format` cannot re-join them,
   parenthesizing a short chain's base receiver
   ([ADR 9](docs/decisions/9_anchor_comments_pin_layout_ruff_cannot_express.md)), and strips the
   anchor when its chain shrinks below two invocations — chains carrying foreign comments or
-  multiline arguments are reported for human layout instead
-- `--only-autofixable` makes it best effort: every available fix is applied, the remaining
-  violations are still reported, and the exit code stays 0
+  multiline arguments are left for `check` instead
+
+Whatever `format` leaves unfixed is a non-autofixable violation that `check` reports —
+`check --ignore-autofixable` is the report scoped to exactly that set
+([ADR 12](docs/decisions/12_autofixables_are_mechanical_sanitation.md)).
 
 ## Configuration
 
@@ -137,7 +146,7 @@ reports nor fixes.
 
 ## CI Reports
 
-`check` and `format` emit machine-readable reports via `--output-format`
+`check` emits machine-readable reports via `--output-format`
 (`text`/`gitlab`/`github`/`sarif`) and `--output-file`
 ([ADR 7](docs/decisions/7_ci_report_formats_mirror_ruff.md)). GitLab code quality:
 

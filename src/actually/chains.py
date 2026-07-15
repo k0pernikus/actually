@@ -37,6 +37,7 @@ RewriteMode = Literal["explode-call", "inline", "wrap"]
 class ChainLayoutGap:
     kind: ChainGapKind
     line: int
+    autofixable: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,9 +66,15 @@ def chain_layout_gaps(source: str) -> tuple[ChainLayoutGap, ...]:
     root = parsed_root(source)
     chains = _governed_chains(root)
     governed_base_lines = {chain.base_end[0] for chain in chains}
-    layout_gaps = [ChainLayoutGap(kind="chain-not-canonical", line=start_position(chain.top)[0]) for chain in chains if not _is_canonical(chain, lines)]
+    layout_gaps = [
+        ChainLayoutGap(kind="chain-not-canonical", line=start_position(chain.top)[0], autofixable=_is_explodable(chain, lines))
+        for chain in chains
+        if not _is_canonical(chain, lines)
+    ]
     anchor_gaps = [
-        ChainLayoutGap(kind="stale-anchor", line=comment.range().start.line) for comment in _anchor_comments(root) if comment.range().start.line not in governed_base_lines
+        ChainLayoutGap(kind="stale-anchor", line=comment.range().start.line, autofixable=True)
+        for comment in _anchor_comments(root)
+        if comment.range().start.line not in governed_base_lines
     ]
 
     return tuple(

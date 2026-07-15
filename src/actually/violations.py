@@ -120,3 +120,4 @@ class Violation:
     rule: Rule
     line: int
     message: str
+    autofixable: bool

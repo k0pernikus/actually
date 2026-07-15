@@ -3,6 +3,7 @@ from itertools import groupby
 from ast_grep_py import SgNode
 
 from actually.chains import ANCHOR_COMMENT, ChainLayoutGap, chain_layout_gaps
+from actually.formatting import is_safely_removable
 from actually.literals import LiteralLayoutGap, literal_layout_gaps
 from actually.sg_nodes import parsed_root
 from actually.spacing import ReturnSpacingGap, return_spacing_gaps
@@ -107,6 +108,7 @@ def _else_violation(clause: SgNode) -> Violation:
         rule=ELSE_RULE_BY_PARENT_KIND[parent_kind],
         line=_report_line(clause),
         message=ELSE_MESSAGE_BY_PARENT_KIND[parent_kind],
+        autofixable=is_safely_removable(clause),
     )
 
 
@@ -116,6 +118,7 @@ def _elif_violations(root: SgNode) -> tuple[Violation, ...]:
             rule=NO_ELIF,
             line=_report_line(clause),
             message="banned `elif` — flatten to guard clauses with early exits",
+            autofixable=False,
         )
         for clause in root.find_all(kind="elif_clause")
     )
@@ -127,6 +130,7 @@ def _nested_ternary_violations(root: SgNode) -> tuple[Violation, ...]:
             rule=TERNARY_NOT_NESTED,
             line=_report_line(ternary),
             message="nested ternary — only flat conditional expressions are allowed",
+            autofixable=False,
         )
         for ternary in root.find_all(kind="conditional_expression")
         if _has_ternary_ancestor(ternary)
@@ -139,6 +143,7 @@ def _degenerate_ternary_violations(root: SgNode) -> tuple[Violation, ...]:
             rule=TERNARY_NOT_EMPTY,
             line=_report_line(ternary),
             message="degenerate ternary arm — a placeholder `None`/empty arm is a hidden `else`",
+            autofixable=False,
         )
         for ternary in root.find_all(kind="conditional_expression")
         if _has_degenerate_arm(ternary)
@@ -159,6 +164,7 @@ def _decision_table_violations(container: SgNode) -> tuple[Violation, ...]:
             rule=PREFER_MATCH,
             line=_report_line(run[0]),
             message="consecutive conditional returns dispatch on one subject — write one `match` statement",
+            autofixable=False,
         )
         for run, follower in _conditional_return_runs(statements)
         if len(run) >= 2 and _is_decision_terminal(follower) and _dispatches_one_scrutinee(run)
@@ -262,12 +268,14 @@ def _chain_violation(gap: ChainLayoutGap) -> Violation:
             rule=MULTI_LINE_CHAIN,
             line=gap.line + 1,
             message=f"stale `{ANCHOR_COMMENT}` anchor — no chain of two or more invocations starts here",
+            autofixable=gap.autofixable,
         )
 
     return Violation(
         rule=MULTI_LINE_CHAIN,
         line=gap.line + 1,
         message=f"chain of two or more invocations — one call per line, base line anchored with `{ANCHOR_COMMENT}`",
+        autofixable=gap.autofixable,
     )
 
 
@@ -281,12 +289,14 @@ def _literal_violation(gap: LiteralLayoutGap) -> Violation:
             rule=TRAILING_COMMA,
             line=gap.literal_start_line + 1,
             message="missing trailing comma after the last element",
+            autofixable=gap.autofixable,
         )
 
     return Violation(
         rule=ONE_ELEMENT_PER_LINE,
         line=gap.literal_start_line + 1,
         message="collection literal not one element per line with brackets on their own lines",
+        autofixable=gap.autofixable,
     )
 
 
@@ -300,12 +310,14 @@ def _spacing_violation(gap: ReturnSpacingGap) -> Violation:
             rule=BLANK_BEFORE_RETURN,
             line=gap.return_start_line + 1,
             message="blank line required above `return` following other statements",
+            autofixable=True,
         )
 
     return Violation(
         rule=BLANK_AFTER_RETURN,
         line=gap.return_start_line + 1,
         message="blank line required below `return` when code follows",
+        autofixable=True,
     )
 
 

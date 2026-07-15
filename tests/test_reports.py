@@ -14,6 +14,7 @@ ELSE_FINDING = Finding(
         rule=NO_IF_ELSE,
         line=4,
         message="banned `else` on `if` — restructure to guard clauses",
+        autofixable=False,
     ),
 )
 COMMA_FINDING = Finding(
@@ -22,6 +23,7 @@ COMMA_FINDING = Finding(
         rule=TRAILING_COMMA,
         line=9,
         message="missing trailing comma after the last element",
+        autofixable=True,
     ),
 )
 
@@ -38,6 +40,7 @@ COMMA_FINDING = Finding(
                         rule=NO_IF_ELSE,
                         line=4,
                         message="banned `else` on `if` — restructure to guard clauses",
+                        autofixable=False,
                     ),
                 ),
             ),
@@ -53,6 +56,7 @@ COMMA_FINDING = Finding(
                         rule=NO_IF_ELSE,
                         line=4,
                         message="banned `else` on `if` — restructure to guard clauses",
+                        autofixable=False,
                     ),
                 ),
             ),

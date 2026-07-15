@@ -206,21 +206,40 @@ def _lint_command_options[CommandFunction: Callable[..., None]](command: Command
     return INCLUDE_OPTION(EXCLUDE_OPTION(OUTPUT_FORMAT_OPTION(OUTPUT_FILE_OPTION(HELP_OPTION(command)))))
 
 
+def _format_command_options[CommandFunction: Callable[..., None]](command: CommandFunction) -> CommandFunction:
+    return INCLUDE_OPTION(EXCLUDE_OPTION(HELP_OPTION(command)))
+
+
 @main.command(
     name="check",
     short_help="Report violations without modifying files; exit 1 when any are found.",
+)
+@click.option(
+    "--only-autofixable",
+    "only_autofixable",
+    is_flag=True,
+    help="Report only the violations `format` mechanically fixes — the formatter gate.",
+)
+@click.option(
+    "--ignore-autofixable",
+    "ignore_autofixable",
+    is_flag=True,
+    help="Report only the violations a human must resolve — the code-quality set.",
 )
 @_lint_command_options
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
 def check(
     paths: tuple[Path, ...],
+    only_autofixable: bool,
+    ignore_autofixable: bool,
     include_entries: tuple[str, ...],
     exclude_entries: tuple[str, ...],
     output_format_value: str,
     output_file: str,
 ) -> None:
+    _reject_conflicting_filters(only_autofixable, ignore_autofixable)
     enabled = _selection(include_entries, exclude_entries)
-    findings = _collect_findings(paths, apply_fixes=False, enabled=enabled)
+    findings = _autofixable_scoped(_collect_findings(paths, enabled), only_autofixable, ignore_autofixable)
     _emit_report(_output_format(output_format_value), findings, output_file)
     if findings:
         raise SystemExit(1)
@@ -228,29 +247,17 @@ def check(
 
 @main.command(
     name="format",
-    short_help="Rewrite files with every auto-fix the active selection enables, then report what remains.",
+    short_help="Apply every auto-fix the active selection enables; print only the files it changes.",
 )
-@click.option(
-    "--only-autofixable",
-    "only_autofixable",
-    is_flag=True,
-    help="Best effort: apply every available fix, report the rest, and exit 0 even when unfixable violations remain.",
-)
-@_lint_command_options
+@_format_command_options
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
 def format_files(
     paths: tuple[Path, ...],
-    only_autofixable: bool,
     include_entries: tuple[str, ...],
     exclude_entries: tuple[str, ...],
-    output_format_value: str,
-    output_file: str,
 ) -> None:
-    enabled = _selection(include_entries, exclude_entries)
-    findings = _collect_findings(paths, apply_fixes=True, enabled=enabled)
-    _emit_report(_output_format(output_format_value), findings, output_file)
-    if findings and not only_autofixable:
-        raise SystemExit(1)
+    enabled = _loaded_selection(include_entries, exclude_entries).enabled
+    _apply_fixes(paths, enabled)
 
 
 def _selection(
@@ -318,26 +325,47 @@ def _output_format(value: str) -> OutputFormat:
     return OUTPUT_FORMAT_BY_VALUE[value]
 
 
+def _reject_conflicting_filters(only_autofixable: bool, ignore_autofixable: bool) -> None:
+    if only_autofixable and ignore_autofixable:
+        raise click.UsageError("--only-autofixable and --ignore-autofixable are mutually exclusive")
+
+
+def _autofixable_scoped(
+    findings: tuple[Finding, ...],
+    only_autofixable: bool,
+    ignore_autofixable: bool,
+) -> tuple[Finding, ...]:
+    if only_autofixable:
+        return tuple(finding for finding in findings if finding.violation.autofixable)
+
+    if ignore_autofixable:
+        return tuple(finding for finding in findings if not finding.violation.autofixable)
+
+    return findings
+
+
 def _collect_findings(
     paths: tuple[Path, ...],
-    apply_fixes: bool,
     enabled: frozenset[RuleCode],
 ) -> tuple[Finding, ...]:
-    return tuple(finding for file in python_files(paths) for finding in _process_file(file, apply_fixes, enabled))
+    return tuple(finding for file in python_files(paths) for finding in _file_findings(file, enabled))
 
 
-def _process_file(
-    file: Path,
-    apply_fixes: bool,
-    enabled: frozenset[RuleCode],
-) -> tuple[Finding, ...]:
+def _file_findings(file: Path, enabled: frozenset[RuleCode]) -> tuple[Finding, ...]:
     source = file.read_text(encoding="utf-8")
-    checked = _formatted(file, source, enabled) if apply_fixes else source
-    if checked != source:
-        file.write_text(checked, encoding="utf-8")
-        click.secho(f"fixed: {file}", fg="green", err=True)
 
-    return tuple(Finding(path=str(file), violation=violation) for violation in find_violations(checked, enabled))
+    return tuple(Finding(path=str(file), violation=violation) for violation in find_violations(source, enabled))
+
+
+def _apply_fixes(paths: tuple[Path, ...], enabled: frozenset[RuleCode]) -> None:
+    for file in python_files(paths):
+        source = file.read_text(encoding="utf-8")
+        formatted = _formatted(file, source, enabled)
+        if formatted == source:
+            continue
+
+        file.write_text(formatted, encoding="utf-8")
+        click.secho(f"fixed: {file}", fg="green", err=True)
 
 
 def _emit_report(
