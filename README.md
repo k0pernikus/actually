@@ -47,6 +47,12 @@ prints the same catalog in the terminal, docs links included:
 | ACTL001 | [trailing-comma](rules/trailing-comma.md) | unstable | yes | a dict/list/set literal whose last element lacks a trailing comma |
 | ACTL002 | [one-element-per-line](rules/one-element-per-line.md) | unstable | partial | a dict/list/set literal with elements sharing a line with a bracket or each other |
 
+## actually-operators
+
+| Code | Rule | Status | Auto-fix | What it enforces |
+|:---|:---|:---|:---|:---|
+| ACTO001 | [no-walrus](rules/no-walrus.md) | stable | no | `:=` (the walrus / assignment expression) — bind the name on its own statement above its use, never inside an expression |
+
 ## actually-returns
 
 | Code | Rule | Status | Auto-fix | What it enforces |

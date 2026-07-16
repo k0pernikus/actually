@@ -17,6 +17,9 @@ a flat ternary (`x = "a" if cond else "b"`) stays valid — its limits are terna
 is a different overload, banned separately by no-for-else (ACTE002), no-while-else (ACTE003),
 and no-try-else (ACTE001).
 '''
+
+[[rules.examples]]
+title = "Else on an if"
 banned = '''
 def describe(config):
     if config is None:
@@ -50,6 +53,9 @@ alone and appending a case is appending a statement. This rule bans exactly `eli
 flattened arms all compare one shared subject, `prefer-match` (ACTI003) then escalates the
 chain to a `match` statement — that judgement belongs to that rule, never to this one.
 '''
+
+[[rules.examples]]
+title = "Elif chain"
 banned = '''
 def access_level(user, resource):
     if user.is_admin:
@@ -80,6 +86,9 @@ either arm is an `elif` chain in expression form, with reading order collapsing 
 point where clarity matters most. Refactor to guard clauses — or, when the arms dispatch on a
 single subject, one `match` statement (ACTI003).
 '''
+
+[[rules.examples]]
+title = "Nested ternary"
 banned = '''
 action = "beach" if sunny else "sleep" if night else "home"
 '''
@@ -110,6 +119,9 @@ literal — is a hidden `else` smuggling an absent case into the binding: the re
 before the binding exists — raise on absent input, branch at the boundary, or accumulate with
 guarded appends when optional parts multiply.
 '''
+
+[[rules.examples]]
+title = "Degenerate None arm"
 banned = '''
 parsed = None if raw is None else parse(raw)
 '''
@@ -145,6 +157,9 @@ chains — a `parent is None` check narrowing what the next call may touch — a
 No auto-fix: a synthesized raising default arm would alter behaviour — a RISKY rewrite
 reserved for a human.
 '''
+
+[[rules.examples]]
+title = "Shared-scrutinee if-run"
 banned = '''
 def http_label(status):
     if status == 200:
@@ -196,6 +211,9 @@ already means. `format` rewrites this automatically when every `except` body exi
 `raise`, `continue`, `break`); when one falls through, the dedent would change behaviour, so it
 is reported for human refactoring instead.
 '''
+
+[[rules.examples]]
+title = "Else on try"
 banned = '''
 def describe(path):
     try:
@@ -227,6 +245,9 @@ overloading `else` to mean "completed", so the normal completion path sits in th
 reads as exceptional. Extract the search into a helper that returns early on a match; the
 function tail then reads as the natural "nothing matched" case, with no `else` required.
 '''
+
+[[rules.examples]]
+title = "Else on for"
 banned = '''
 def first_even(numbers):
     for number in numbers:
@@ -257,6 +278,9 @@ exceptional-looking branch. Restructure so the after-loop code follows the loop 
 `break`-search becomes a guard that returns on the match, with the fall-through as the
 completion case.
 '''
+
+[[rules.examples]]
+title = "Else on while"
 banned = '''
 def scan(source, target):
     while source.has_next():
@@ -307,6 +331,9 @@ calls rides with its call and a short chain keeps its base parens, because other
 them. `ruff format` exposes no toggle to relax this; a native fluent-chain control
 (astral-sh/ruff#8598) would retire the compromise.
 '''
+
+[[rules.examples]]
+title = "Chain on one line"
 banned = '''
 command = CommandLine.of("git").subcommand("config").argument(key)
 '''
@@ -332,6 +359,9 @@ trailing comma the previous last element changes too, polluting every diff. The 
 the magic trailing comma that formatters (ruff, black) respect, pinning the multiline layout
 instead of collapsing it back to one line.
 '''
+
+[[rules.examples]]
+title = "Missing trailing comma"
 banned = '''
 labels = {
     200: "ok",
@@ -359,6 +389,9 @@ The fix rewrites the literal in place; a literal carrying comments or multiline 
 reported for human formatting instead. Tuples are exempt — they appear in subscripts and type
 expressions where this layout is not wanted.
 '''
+
+[[rules.examples]]
+title = "Crowded single-line literal"
 banned = '''
 point = {"x": 1, "y": 2}
 '''
@@ -381,6 +414,9 @@ A `return` that follows other statements in its block is the exit point of the f
 stacked flush against the work above it, it reads as just another line. One blank line above
 marks the handoff from computing the value to leaving with it.
 '''
+
+[[rules.examples]]
+title = "Return stacked under work"
 banned = '''
 def f(baz):
     if baz:
@@ -407,6 +443,9 @@ Code on the line directly under a `return` — typically after the enclosing blo
 reads as if it belonged to the same thought. One blank line after the `return` marks that a
 flow ended there and something new begins.
 '''
+
+[[rules.examples]]
+title = "Code under a return"
 banned = '''
 def f(foo, bar, baz):
     if foo:
@@ -421,4 +460,80 @@ def f(foo, bar, baz):
 
     if bar:
         return baz
+'''
+
+[[rules]]
+code = "ACTO001"
+name = "no-walrus"
+group = "actually-operators"
+status = "stable"
+summary = "`:=` (the walrus / assignment expression) — bind the name on its own statement above its use, never inside an expression"
+rationale = '''
+A statement acts — it binds a name or changes state; an expression only computes a value. The
+walrus operator `:=` erases that line, binding a name as a side effect of evaluating a larger
+expression, so a reader scanning for where a name is defined must now look inside conditions,
+comprehensions, and boolean operands. Keep the line hard: data flows top-to-bottom, every name
+defined on its own statement above its first use.
+'''
+
+[[rules.examples]]
+title = "Bind above the use, not mid-condition"
+rationale = '''
+A name is defined on its own statement above its first use — `n = len(data)` then `if n > 10:`,
+never folded into the condition it feeds.
+'''
+banned = '''
+if (n := len(data)) > 10:
+    process(data)
+'''
+wanted = '''
+n = len(data)
+if n > 10:
+    process(data)
+'''
+
+[[rules.examples]]
+title = "Short-circuit hides which calls run"
+rationale = '''
+The cost compounds when a condition short-circuits over side-effecting calls. Take a probe that
+counts how often each method runs:
+
+```python
+class Probe:
+    def __init__(self) -> None:
+        self.f_runs = 0
+        self.g_runs = 0
+
+    def f(self) -> int:
+        self.f_runs += 1
+
+        return 0
+
+    def g(self, x: int) -> int:
+        self.g_runs += 1
+
+        return 42
+```
+
+`if (x := probe.f()) and (y := probe.g(x)):` runs `g` only when `x` is truthy — `and`
+short-circuits, so a falsy `x` leaves `g` unrun and `g_runs` at zero. Yet a reader skimming the
+line parses it as three plain statements — `x = probe.f()`, `y = probe.g(x)`, `if x and y:` —
+which would call `g` unconditionally: a different program. Guard clauses make the control flow the
+eye already expects — bind, check, exit — one decision per statement, the short-circuit now
+explicit as an early return.
+'''
+banned = '''
+def check(probe):
+    if (x := probe.f()) and (y := probe.g(x)):
+        return
+'''
+wanted = '''
+def check(probe):
+    x = probe.f()
+    if not x:
+        return
+
+    y = probe.g(x)
+    if not y:
+        return
 '''

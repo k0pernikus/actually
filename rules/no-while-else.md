@@ -11,7 +11,9 @@ exceptional-looking branch. Restructure so the after-loop code follows the loop 
 `break`-search becomes a guard that returns on the match, with the fall-through as the
 completion case.
 
-## Banned
+## Else on while
+
+### Banned
 
 ```python
 def scan(source, target):
@@ -22,7 +24,7 @@ def scan(source, target):
         return None
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def scan(source, target):

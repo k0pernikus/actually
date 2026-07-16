@@ -28,8 +28,8 @@ DECLARABLE_FIX_VALUES = frozenset(
 )
 ACTIVE_RULE_KEYS = frozenset(
     {
-        "banned",
         "code",
+        "examples",
         "fix",
         "group",
         "name",
@@ -37,6 +37,13 @@ ACTIVE_RULE_KEYS = frozenset(
         "ruff_conflicts",
         "status",
         "summary",
+    },
+)
+EXAMPLE_KEYS = frozenset(
+    {
+        "banned",
+        "rationale",
+        "title",
         "wanted",
     },
 )
@@ -71,6 +78,14 @@ class RuffConflict:
 
 
 @dataclass(frozen=True, slots=True)
+class RuleExample:
+    title: str
+    banned: str
+    wanted: str
+    rationale: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class RuleMetadata:
     code: RuleCode
     name: RuleName
@@ -79,8 +94,7 @@ class RuleMetadata:
     fix: FixCapability
     summary: str
     rationale: str
-    banned: str
-    wanted: str
+    examples: tuple[RuleExample, ...] = ()
     ruff_conflicts: tuple[RuffConflict, ...] = ()
 
 
@@ -176,9 +190,31 @@ def _active_rule(entry: dict[str, object], status: ActiveStatus) -> RuleMetadata
         fix=_fix_capability(entry),
         summary=_required_string(entry, "summary"),
         rationale=_required_string(entry, "rationale"),
-        banned=_required_string(entry, "banned"),
-        wanted=_required_string(entry, "wanted"),
+        examples=_examples(entry),
         ruff_conflicts=_ruff_conflicts(entry),
+    )
+
+
+def _examples(entry: dict[str, object]) -> tuple[RuleExample, ...]:
+    raw = entry.get("examples")
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("every active [[rules]] entry must declare a non-empty examples array")
+
+    return tuple(_example(item) for item in raw)
+
+
+def _example(item: object) -> RuleExample:
+    if not isinstance(item, dict):
+        raise TypeError("every [[rules.examples]] entry must be a table")
+
+    table: dict[str, object] = {str(key): value for key, value in item.items()}
+    _reject_unknown_keys(table, EXAMPLE_KEYS)
+
+    return RuleExample(
+        title=_required_string(table, "title"),
+        banned=_required_string(table, "banned"),
+        wanted=_required_string(table, "wanted"),
+        rationale=_optional_string(table, "rationale"),
     )
 
 
@@ -274,6 +310,13 @@ def _required_string(entry: dict[str, object], key: str) -> str:
         raise ValueError(f"missing or empty string for {key!r} in a [[rules]] entry")
 
     return value.strip()
+
+
+def _optional_string(entry: dict[str, object], key: str) -> str:
+    if key not in entry:
+        return ""
+
+    return _required_string(entry, key)
 
 
 def _validate_registry_congruence(catalog: RuleCatalog) -> None:

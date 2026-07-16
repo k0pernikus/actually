@@ -11,13 +11,15 @@ literal — is a hidden `else` smuggling an absent case into the binding: the re
 before the binding exists — raise on absent input, branch at the boundary, or accumulate with
 guarded appends when optional parts multiply.
 
-## Banned
+## Degenerate None arm
+
+### Banned
 
 ```python
 parsed = None if raw is None else parse(raw)
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def parsed(raw):

@@ -16,6 +16,7 @@ from actually.violations import (
     NO_FOR_ELSE,
     NO_IF_ELSE,
     NO_TRY_ELSE,
+    NO_WALRUS,
     NO_WHILE_ELSE,
     ONE_ELEMENT_PER_LINE,
     PREFER_MATCH,
@@ -78,6 +79,7 @@ def find_violations(
 ) -> tuple[Violation, ...]:
     root = parsed_root(source)
     found = (
+        *_walrus_violations(root),
         *_else_violations(root),
         *_elif_violations(root),
         *_nested_ternary_violations(root),
@@ -93,6 +95,18 @@ def find_violations(
             (violation for violation in found if violation.rule.code in enabled),
             key=lambda violation: (violation.line, violation.rule.code),
         )
+    )
+
+
+def _walrus_violations(root: SgNode) -> tuple[Violation, ...]:
+    return tuple(
+        Violation(
+            rule=NO_WALRUS,
+            line=_report_line(named_expression),
+            message="banned `:=` (walrus) — bind the name on its own statement above its use, never inside an expression",
+            autofixable=False,
+        )
+        for named_expression in root.find_all(kind="named_expression")
     )
 
 

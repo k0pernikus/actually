@@ -30,6 +30,7 @@ ALL_CODES: frozenset[RuleCode] = frozenset(
         "ACTL002",
         "ACTR001",
         "ACTR002",
+        "ACTO001",
     },
 )
 

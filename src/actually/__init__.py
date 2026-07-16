@@ -6,6 +6,7 @@ from actually.literals import LiteralLayoutGap, literal_layout_gaps
 from actually.metadata import (
     RetiredRuleMetadata,
     RuleCatalog,
+    RuleExample,
     RuleMetadata,
     load_rule_catalog,
     rule_docs_url,
@@ -40,6 +41,7 @@ __all__ = [
     "RetiredRuleMetadata",
     "ReturnSpacingGap",
     "RuleCatalog",
+    "RuleExample",
     "RuleMetadata",
     "Rule",
     "RuleCode",

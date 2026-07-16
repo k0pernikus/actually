@@ -16,6 +16,7 @@ RuleCode = Literal[
     "ACTL002",
     "ACTR001",
     "ACTR002",
+    "ACTO001",
 ]
 
 RuleName = Literal[
@@ -32,6 +33,7 @@ RuleName = Literal[
     "one-element-per-line",
     "blank-before-return",
     "blank-after-return",
+    "no-walrus",
 ]
 
 RuleGroup = Literal[
@@ -39,6 +41,7 @@ RuleGroup = Literal[
     "actually-completion-clauses",
     "actually-if-conditions",
     "actually-literals",
+    "actually-operators",
     "actually-returns",
     "actually-ternaries",
 ]
@@ -64,6 +67,7 @@ TRAILING_COMMA = Rule(code="ACTL001", name="trailing-comma", group="actually-lit
 ONE_ELEMENT_PER_LINE = Rule(code="ACTL002", name="one-element-per-line", group="actually-literals")
 BLANK_BEFORE_RETURN = Rule(code="ACTR001", name="blank-before-return", group="actually-returns")
 BLANK_AFTER_RETURN = Rule(code="ACTR002", name="blank-after-return", group="actually-returns")
+NO_WALRUS = Rule(code="ACTO001", name="no-walrus", group="actually-operators")
 
 RULES: tuple[Rule, ...] = (
     NO_IF_ELSE,
@@ -79,6 +83,7 @@ RULES: tuple[Rule, ...] = (
     ONE_ELEMENT_PER_LINE,
     BLANK_BEFORE_RETURN,
     BLANK_AFTER_RETURN,
+    NO_WALRUS,
 )
 
 
@@ -89,6 +94,7 @@ RuleGroupPrefix = Literal[
     "ACTH",
     "ACTI",
     "ACTL",
+    "ACTO",
     "ACTR",
     "ACTT",
 ]
@@ -104,6 +110,7 @@ RULE_GROUP_BY_PREFIX: dict[RuleGroupPrefix, RuleGroup] = {
     "ACTH": "actually-chains",
     "ACTI": "actually-if-conditions",
     "ACTL": "actually-literals",
+    "ACTO": "actually-operators",
     "ACTR": "actually-returns",
     "ACTT": "actually-ternaries",
 }

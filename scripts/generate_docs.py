@@ -7,6 +7,7 @@ from actually.metadata import (
     FIX_LABELS,
     RetiredRuleMetadata,
     RuleCatalog,
+    RuleExample,
     RuleMetadata,
     load_rule_catalog,
 )
@@ -58,14 +59,19 @@ def main(check_only: bool) -> None:
 
 
 def _validate_snippets(rule: RuleMetadata) -> None:
-    triggered = {violation.rule.code for violation in find_violations(rule.banned)}
-    if rule.code not in triggered:
-        raise ValueError(f"{rule.code}: the banned example does not trigger the rule (triggered: {sorted(triggered)})")
+    for example in rule.examples:
+        _validate_example(rule, example)
 
-    remaining = find_violations(rule.wanted)
+
+def _validate_example(rule: RuleMetadata, example: RuleExample) -> None:
+    triggered = {violation.rule.code for violation in find_violations(example.banned)}
+    if rule.code not in triggered:
+        raise ValueError(f"{rule.code} example {example.title!r}: banned does not trigger the rule (triggered: {sorted(triggered)})")
+
+    remaining = find_violations(example.wanted)
     if remaining:
         details = ", ".join(f"{violation.rule.code}@{violation.line}" for violation in remaining)
-        raise ValueError(f"{rule.code}: the wanted example is not clean ({details})")
+        raise ValueError(f"{rule.code} example {example.title!r}: wanted is not clean ({details})")
 
 
 def _render_readme(catalog: RuleCatalog) -> str:
@@ -121,24 +127,47 @@ def _render_rule_page(rule: RuleMetadata) -> str:
         "",
         rule.rationale,
         "",
-        "## Banned",
-        "",
-        "```python",
-        rule.banned,
-        "```",
-        "",
-        "## Wanted",
-        "",
-        "```python",
-        rule.wanted,
-        "```",
-        "",
+        *_examples_block(rule),
         *_conflicts_block(rule),
         PAGE_NOTICE,
         "",
     ]
 
     return "\n".join(parts)
+
+
+def _examples_block(rule: RuleMetadata) -> list[str]:
+    return [line for example in rule.examples for line in _example_section(example)]
+
+
+def _example_section(example: RuleExample) -> list[str]:
+    return [
+        f"## {example.title}",
+        "",
+        *_example_rationale(example),
+        "### Banned",
+        "",
+        "```python",
+        example.banned,
+        "```",
+        "",
+        "### Wanted",
+        "",
+        "```python",
+        example.wanted,
+        "```",
+        "",
+    ]
+
+
+def _example_rationale(example: RuleExample) -> list[str]:
+    if not example.rationale:
+        return []
+
+    return [
+        example.rationale,
+        "",
+    ]
 
 
 def _conflicts_block(rule: RuleMetadata) -> list[str]:

@@ -30,13 +30,15 @@ calls rides with its call and a short chain keeps its base parens, because other
 them. `ruff format` exposes no toggle to relax this; a native fluent-chain control
 (astral-sh/ruff#8598) would retire the compromise.
 
-## Banned
+## Chain on one line
+
+### Banned
 
 ```python
 command = CommandLine.of("git").subcommand("config").argument(key)
 ```
 
-## Wanted
+### Wanted
 
 ```python
 command = (

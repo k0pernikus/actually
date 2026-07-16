@@ -13,7 +13,9 @@ already means. `format` rewrites this automatically when every `except` body exi
 `raise`, `continue`, `break`); when one falls through, the dedent would change behaviour, so it
 is reported for human refactoring instead.
 
-## Banned
+## Else on try
+
+### Banned
 
 ```python
 def describe(path):
@@ -25,7 +27,7 @@ def describe(path):
         return describe(config)
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def describe(path):

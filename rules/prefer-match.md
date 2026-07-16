@@ -22,7 +22,9 @@ chains — a `parent is None` check narrowing what the next call may touch — a
 No auto-fix: a synthesized raising default arm would alter behaviour — a RISKY rewrite
 reserved for a human.
 
-## Banned
+## Shared-scrutinee if-run
+
+### Banned
 
 ```python
 def http_label(status):
@@ -41,7 +43,7 @@ def http_label(status):
     raise ValueError(status)
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def http_label(status):

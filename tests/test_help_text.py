@@ -30,8 +30,6 @@ def _rule(code: RuleCode, name: RuleName, group: RuleGroup, fix: FixCapability, 
         fix=fix,
         summary=summary,
         rationale="inert",
-        banned="inert",
-        wanted="inert",
     )
 
 

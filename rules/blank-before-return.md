@@ -9,7 +9,9 @@ A `return` that follows other statements in its block is the exit point of the f
 stacked flush against the work above it, it reads as just another line. One blank line above
 marks the handoff from computing the value to leaving with it.
 
-## Banned
+## Return stacked under work
+
+### Banned
 
 ```python
 def f(baz):
@@ -18,7 +20,7 @@ def f(baz):
         return foo
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def f(baz):

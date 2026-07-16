@@ -202,6 +202,44 @@ def test_degenerate_ternary_arm_is_flagged(source: str) -> None:
     ("source", "expected"),
     [
         pytest.param(
+            "if (n := len(data)) > 10:\n    use(n)\n",
+            [
+                ("ACTO001", 1),
+            ],
+            id="walrus-in-if-condition",
+        ),
+        pytest.param(
+            "while (chunk := source.read(8)):\n    handle(chunk)\n",
+            [
+                ("ACTO001", 1),
+            ],
+            id="walrus-in-while-condition",
+        ),
+        pytest.param(
+            "ys = [y for x in xs if (y := g(x)) is not None]\n",
+            [
+                ("ACTO001", 1),
+            ],
+            id="walrus-in-comprehension-filter",
+        ),
+        pytest.param(
+            "def check(probe):\n    if (x := probe.f()) and (y := probe.g(x)):\n        return\n",
+            [
+                ("ACTO001", 2),
+                ("ACTO001", 2),
+            ],
+            id="short-circuit-binds-each-flagged",
+        ),
+    ],
+)
+def test_walrus_binding_is_flagged(source: str, expected: list[tuple[str, int]]) -> None:
+    assert outline(source) == expected
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        pytest.param(
             "def f(foo, bar, baz):\n    if foo:\n        return foo\n    if bar:\n        return baz\n",
             [
                 ("ACTR002", 3),
@@ -273,6 +311,13 @@ def test_compliant_return_layout_is_clean(source: str) -> None:
                 ("ACTI002", 4, False),
             ],
             id="check-only-elif",
+        ),
+        pytest.param(
+            "if (n := len(data)) > 10:\n    use(n)\n",
+            [
+                ("ACTO001", 1, False),
+            ],
+            id="check-only-walrus",
         ),
         pytest.param(
             "def f():\n    x = 1\n    return x\n",

@@ -13,7 +13,9 @@ alone and appending a case is appending a statement. This rule bans exactly `eli
 flattened arms all compare one shared subject, `prefer-match` (ACTI003) then escalates the
 chain to a `match` statement — that judgement belongs to that rule, never to this one.
 
-## Banned
+## Elif chain
+
+### Banned
 
 ```python
 def access_level(user, resource):
@@ -23,7 +25,7 @@ def access_level(user, resource):
         return "read"
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def access_level(user, resource):

@@ -11,13 +11,15 @@ The fix rewrites the literal in place; a literal carrying comments or multiline 
 reported for human formatting instead. Tuples are exempt — they appear in subscripts and type
 expressions where this layout is not wanted.
 
-## Banned
+## Crowded single-line literal
+
+### Banned
 
 ```python
 point = {"x": 1, "y": 2}
 ```
 
-## Wanted
+### Wanted
 
 ```python
 point = {

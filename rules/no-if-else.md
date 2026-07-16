@@ -14,7 +14,9 @@ a flat ternary (`x = "a" if cond else "b"`) stays valid — its limits are terna
 is a different overload, banned separately by no-for-else (ACTE002), no-while-else (ACTE003),
 and no-try-else (ACTE001).
 
-## Banned
+## Else on an if
+
+### Banned
 
 ```python
 def describe(config):
@@ -24,7 +26,7 @@ def describe(config):
         return str(config)
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def describe(config):

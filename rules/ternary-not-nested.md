@@ -10,13 +10,15 @@ either arm is an `elif` chain in expression form, with reading order collapsing 
 point where clarity matters most. Refactor to guard clauses — or, when the arms dispatch on a
 single subject, one `match` statement (ACTI003).
 
-## Banned
+## Nested ternary
+
+### Banned
 
 ```python
 action = "beach" if sunny else "sleep" if night else "home"
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def action(sunny, night):

@@ -10,7 +10,9 @@ trailing comma the previous last element changes too, polluting every diff. The 
 the magic trailing comma that formatters (ruff, black) respect, pinning the multiline layout
 instead of collapsing it back to one line.
 
-## Banned
+## Missing trailing comma
+
+### Banned
 
 ```python
 labels = {
@@ -19,7 +21,7 @@ labels = {
 }
 ```
 
-## Wanted
+### Wanted
 
 ```python
 labels = {

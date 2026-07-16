@@ -10,7 +10,9 @@ overloading `else` to mean "completed", so the normal completion path sits in th
 reads as exceptional. Extract the search into a helper that returns early on a match; the
 function tail then reads as the natural "nothing matched" case, with no `else` required.
 
-## Banned
+## Else on for
+
+### Banned
 
 ```python
 def first_even(numbers):
@@ -21,7 +23,7 @@ def first_even(numbers):
         return None
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def first_even(numbers):

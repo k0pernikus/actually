@@ -9,7 +9,9 @@ Code on the line directly under a `return` — typically after the enclosing blo
 reads as if it belonged to the same thought. One blank line after the `return` marks that a
 flow ended there and something new begins.
 
-## Banned
+## Code under a return
+
+### Banned
 
 ```python
 def f(foo, bar, baz):
@@ -19,7 +21,7 @@ def f(foo, bar, baz):
         return baz
 ```
 
-## Wanted
+### Wanted
 
 ```python
 def f(foo, bar, baz):
