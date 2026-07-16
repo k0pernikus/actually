@@ -22,7 +22,7 @@ prints the same catalog in the terminal, docs links included:
 
 | Code | Rule | Status | Auto-fix | What it enforces |
 |:---|:---|:---|:---|:---|
-| ACTH001 | [multi-line-chain](rules/multi-line-chain.md) | unstable | partial | a chain of two or more invocations not one call per line under a `# well-actually: multi-line` anchor |
+| ACTH001 | [multi-line-chain](rules/multi-line-chain.md) | unstable | partial | a chain — two or more method calls, or a method call with a property access — not one call per line under a `# well-actually: multi-line` anchor |
 
 ## actually-completion-clauses
 

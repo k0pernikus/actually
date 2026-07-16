@@ -172,10 +172,7 @@ def _block_starts_below_keyword(clause: SgNode) -> bool:
 
 
 def _ends_in_terminating_statement(except_clause: SgNode) -> bool:
-    statements = (
-        (_clause_block(except_clause))  # well-actually: multi-line
-        .children()
-    )
+    statements = (_clause_block(except_clause)).children()
     if not statements:
         return False
 
@@ -192,11 +189,36 @@ def _clause_block(clause: SgNode) -> SgNode:
 
 def _dedent_else_clause(source: str, clause: SgNode) -> str:
     block = _clause_block(clause)
-    keyword_line = clause.range().start.line
-    body_end = block.range().end.line
-    shift = block.range().start.column - clause.range().start.column
+    keyword_line = (
+        (clause)  # well-actually: multi-line
+        .range()
+        .start.line
+    )
+    body_end = (
+        (block)  # well-actually: multi-line
+        .range()
+        .end.line
+    )
+    shift = (
+        (block)  # well-actually: multi-line
+        .range()
+        .start.column
+    ) - (
+        (clause)  # well-actually: multi-line
+        .range()
+        .start.column
+    )
     lines = source.split("\n")
-    dedented_body = [_dedent_line(line, shift) for line in lines[block.range().start.line : body_end + 1]]
+    dedented_body = [
+        _dedent_line(line, shift)
+        for line in lines[
+            (
+                (block)  # well-actually: multi-line
+                .range()
+                .start.line
+            ) : body_end + 1
+        ]
+    ]
 
     return "\n".join(
         [

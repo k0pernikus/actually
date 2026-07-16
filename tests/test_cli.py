@@ -10,24 +10,21 @@ from actually.cli import main
 pytestmark = pytest.mark.integration
 
 
-REPORTED_ONLY = "detail = first().second() or third().fourth()\n"
+REPORTED_ONLY = "value = (\n    obj  # keep\n    .a()\n    .b()\n)\n"
 
-MIXED = "value = make(1).build()\ndetail = first().second() or third().fourth()\nif x == 1:\n    result = 1\nelif x == 2:\n    result = 2\n"
+MIXED = "value = obj.a().b()\ndetail = (\n    other  # keep\n    .c()\n    .d()\n)\nif x == 1:\n    result = 1\nelif x == 2:\n    result = 2\n"
 
 
 def _invoke(tmp_path: Path, source: str, args: list[str]) -> tuple[int, str, str]:
     target = tmp_path / "m.py"
     target.write_text(source, encoding="utf-8")
     with contextlib.chdir(tmp_path):
-        result = (
-            (CliRunner())  # well-actually: multi-line
-            .invoke(
-                main,
-                [
-                    *args,
-                    str(target),
-                ],
-            )
+        result = (CliRunner()).invoke(
+            main,
+            [
+                *args,
+                str(target),
+            ],
         )
 
     return result.exit_code, result.output, target.read_text(encoding="utf-8")
@@ -59,7 +56,7 @@ def test_format_applies_fixes_without_reporting_the_remainder(tmp_path: Path) ->
     assert exit_code == 0
     assert "ACTH001" not in output
     assert "# well-actually: multi-line" in after
-    assert "first().second() or third().fourth()" in after
+    assert "other  # keep" in after
 
 
 def test_check_only_autofixable_reports_the_mechanical_set(tmp_path: Path) -> None:
@@ -74,7 +71,7 @@ def test_check_only_autofixable_reports_the_mechanical_set(tmp_path: Path) -> No
 
     assert exit_code == 1
     assert ":1 ACTH001" in output
-    assert ":2 ACTH001" not in output
+    assert ":3 ACTH001" not in output
     assert "ACTI002" not in output
 
 
@@ -90,7 +87,7 @@ def test_check_ignore_autofixable_reports_the_manual_set(tmp_path: Path) -> None
 
     assert exit_code == 1
     assert ":1 ACTH001" not in output
-    assert ":2 ACTH001" in output
+    assert ":3 ACTH001" in output
     assert "ACTI002" in output
 
 

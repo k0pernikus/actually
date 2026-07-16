@@ -16,10 +16,27 @@ def outline(source: str) -> list[tuple[str, int]]:
     [
         pytest.param(
             "value = make(1).build()\n",
+            [],
+            id="single-method-call-not-a-chain",
+        ),
+        pytest.param(
+            "value = obj.a().b()\n",
             [
                 ("ACTH001", 1),
             ],
-            id="two-call-single-line-flagged",
+            id="two-methods-is-a-chain",
+        ),
+        pytest.param(
+            "value = obj.load().section\n",
+            [
+                ("ACTH001", 1),
+            ],
+            id="method-then-property-is-a-chain",
+        ),
+        pytest.param(
+            "value = self.page.locator(x)\n",
+            [],
+            id="receiver-namespace-not-a-chain",
         ),
         pytest.param(
             "value = make(1).build().render()\n",
@@ -29,14 +46,14 @@ def outline(source: str) -> list[tuple[str, int]]:
             id="three-call-single-line-flagged",
         ),
         pytest.param(
-            "value = (\n    make(1)\n    .build()\n)\n",
+            "value = (\n    make(1)\n    .build()\n    .render()\n)\n",
             [
                 ("ACTH001", 2),
             ],
             id="unanchored-multiline-flagged",
         ),
         pytest.param(
-            "value = (\n    (make(1))  # well-actually: multi-line\n    .build()\n)\n",
+            "value = (\n    (resolved)  # well-actually: multi-line\n    .relative_to(directory)\n    .as_posix()\n)\n",
             [],
             id="canonical-anchored-clean",
         ),
@@ -135,18 +152,28 @@ def test_chain_layout_outline(source: str, expected: list[tuple[str, int]]) -> N
     [
         pytest.param(
             "value = make(1).build()\n",
-            "value = (\n    (make(1))  # well-actually: multi-line\n    .build()\n)\n",
-            id="wraps-assignment-chain",
+            "value = make(1).build()\n",
+            id="single-method-call-untouched",
         ),
         pytest.param(
-            "def f():\n    return make(1).build()\n",
-            "def f():\n    return (\n        (make(1))  # well-actually: multi-line\n        .build()\n    )\n",
+            "value = obj.a().b()\n",
+            "value = (\n    (obj)  # well-actually: multi-line\n    .a()\n    .b()\n)\n",
+            id="wraps-two-method-assignment",
+        ),
+        pytest.param(
+            "value = obj.load().section\n",
+            "value = (\n    (obj)  # well-actually: multi-line\n    .load()\n    .section\n)\n",
+            id="folds-method-and-property",
+        ),
+        pytest.param(
+            "def f():\n    return obj.a().b().c()\n",
+            "def f():\n    return (\n        obj  # well-actually: multi-line\n        .a()\n        .b()\n        .c()\n    )\n",
             id="wraps-return-chain",
         ),
         pytest.param(
             "value = (\n    make(1)  # well-actually: multi-line\n    .build()\n)\n",
-            "value = (\n    (make(1))  # well-actually: multi-line\n    .build()\n)\n",
-            id="parenthesizes-single-segment-base",
+            "value = (\n    make(1)\n    .build()\n)\n",
+            id="strips-stale-anchor-on-non-chain",
         ),
         pytest.param(
             "value = (\n    make(1).build().render()\n)\n",
@@ -174,8 +201,8 @@ def test_chain_layout_outline(source: str, expected: list[tuple[str, int]]) -> N
             id="relayouts-chain-inside-multiline-call",
         ),
         pytest.param(
-            "value = make(1).build()  # keep\n",
-            "value = (\n    (make(1))  # well-actually: multi-line\n    .build()\n)  # keep\n",
+            "value = obj.a().b()  # keep\n",
+            "value = (\n    (obj)  # well-actually: multi-line\n    .a()\n    .b()\n)  # keep\n",
             id="trailing-comment-rides-the-close",
         ),
         pytest.param(
@@ -184,9 +211,14 @@ def test_chain_layout_outline(source: str, expected: list[tuple[str, int]]) -> N
             id="foreign-comment-inside-chain-reported-only",
         ),
         pytest.param(
-            "value = make([\n    1,\n]).build()\n",
-            "value = make([\n    1,\n]).build()\n",
-            id="multiline-argument-reported-only",
+            "value = key.public_key().public_bytes(\n    encoding=X,\n    format=Y,\n)\n",
+            "value = (\n    (key)  # well-actually: multi-line\n    .public_key()\n    .public_bytes(\n        encoding=X,\n        format=Y,\n    )\n)\n",
+            id="folds-multiline-argument-segment",
+        ),
+        pytest.param(
+            "def g():\n    return obj.a().b() or fallback\n",
+            "def g():\n    return (\n        (obj)  # well-actually: multi-line\n        .a()\n        .b()\n    ) or fallback\n",
+            id="folds-chain-in-boolean",
         ),
         pytest.param(
             "value = make(1)  # well-actually: multi-line\n",
@@ -194,8 +226,8 @@ def test_chain_layout_outline(source: str, expected: list[tuple[str, int]]) -> N
             id="strips-stale-anchor",
         ),
         pytest.param(
-            "value = (\n    (make(1))  # well-actually: multi-line\n    .build()\n)\n",
-            "value = (\n    (make(1))  # well-actually: multi-line\n    .build()\n)\n",
+            "value = (\n    (resolved)  # well-actually: multi-line\n    .relative_to(directory)\n    .as_posix()\n)\n",
+            "value = (\n    (resolved)  # well-actually: multi-line\n    .relative_to(directory)\n    .as_posix()\n)\n",
             id="canonical-chain-untouched",
         ),
         pytest.param(

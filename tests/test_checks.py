@@ -254,19 +254,18 @@ def test_compliant_return_layout_is_clean(source: str) -> None:
     ("source", "expected"),
     [
         pytest.param(
-            "value = make(1).build()\n",
+            "value = obj.a().b()\n",
             [
                 ("ACTH001", 1, True),
             ],
             id="fixable-chain",
         ),
         pytest.param(
-            "value = first().second() or third().fourth()\n",
+            "value = (\n    obj  # keep\n    .a()\n    .b()\n)\n",
             [
-                ("ACTH001", 1, False),
-                ("ACTH001", 1, False),
+                ("ACTH001", 2, False),
             ],
-            id="reported-only-chain-in-boolean",
+            id="reported-only-chain-with-foreign-comment",
         ),
         pytest.param(
             "def f(x):\n    if x == 1:\n        return 1\n    elif x == 2:\n        return 2\n",

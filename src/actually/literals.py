@@ -30,7 +30,15 @@ class CommaInsertion:
 
 def literal_layout_gaps(source: str) -> tuple[LiteralLayoutGap, ...]:
     gaps = [
-        LiteralLayoutGap(kind=kind, literal_start_line=literal.range().start.line, autofixable=_gap_autofixable(literal, kind))
+        LiteralLayoutGap(
+            kind=kind,
+            literal_start_line=(
+                (literal)  # well-actually: multi-line
+                .range()
+                .start.line
+            ),
+            autofixable=_gap_autofixable(literal, kind),
+        )
         for literal in _collection_literals(parsed_root(source))
         for kind in _gap_kinds(literal)
     ]
@@ -108,26 +116,74 @@ def _has_trailing_comma(literal: SgNode) -> bool:
 
 def _is_one_element_per_line(literal: SgNode) -> bool:
     elements = _elements(literal)
-    if elements[0].range().start.line == literal.range().start.line:
+    if (
+        elements[0]  # well-actually: multi-line
+        .range()
+        .start.line
+    ) == (
+        (literal)  # well-actually: multi-line
+        .range()
+        .start.line
+    ):
         return False
 
-    if elements[-1].range().end.line == literal.range().end.line:
+    if (
+        elements[-1]  # well-actually: multi-line
+        .range()
+        .end.line
+    ) == (
+        (literal)  # well-actually: multi-line
+        .range()
+        .end.line
+    ):
         return False
 
-    return all(later.range().start.line > earlier.range().end.line for earlier, later in zip(elements, elements[1:], strict=False))
+    return all(
+        (
+            (later)  # well-actually: multi-line
+            .range()
+            .start.line
+        )
+        > (
+            (earlier)  # well-actually: multi-line
+            .range()
+            .end.line
+        )
+        for earlier, later in zip(elements, elements[1:], strict=False)
+    )
 
 
 def _is_explodable(literal: SgNode) -> bool:
     if any(child.kind() == "comment" for child in literal.children()):
         return False
 
-    return all(element.range().start.line == element.range().end.line for element in _elements(literal))
+    return all(
+        (
+            (element)  # well-actually: multi-line
+            .range()
+            .start.line
+        )
+        == (
+            (element)  # well-actually: multi-line
+            .range()
+            .end.line
+        )
+        for element in _elements(literal)
+    )
 
 
 def _exploded(lines: list[str], literal: SgNode) -> list[str]:
     open_bracket, close_bracket = LITERAL_BRACKETS[literal.kind()]
-    start = literal.range().start
-    end = literal.range().end
+    start = (
+        (literal)  # well-actually: multi-line
+        .range()
+        .start
+    )
+    end = (
+        (literal)  # well-actually: multi-line
+        .range()
+        .end
+    )
     start_line_text = lines[start.line]
     prefix = start_line_text[: start.column]
     suffix = lines[end.line][end.column :]

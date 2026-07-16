@@ -267,14 +267,14 @@ def _chain_violation(gap: ChainLayoutGap) -> Violation:
         return Violation(
             rule=MULTI_LINE_CHAIN,
             line=gap.line + 1,
-            message=f"stale `{ANCHOR_COMMENT}` anchor — no chain of two or more invocations starts here",
+            message=f"stale `{ANCHOR_COMMENT}` anchor — no method chain starts here",
             autofixable=gap.autofixable,
         )
 
     return Violation(
         rule=MULTI_LINE_CHAIN,
         line=gap.line + 1,
-        message=f"chain of two or more invocations — one call per line, base line anchored with `{ANCHOR_COMMENT}`",
+        message=f"chain of two or more method calls, or a method call with a property access — one call per line, base line anchored with `{ANCHOR_COMMENT}`",
         autofixable=gap.autofixable,
     )
 
@@ -370,4 +370,8 @@ def _parent_of(node: SgNode) -> SgNode:
 
 
 def _report_line(node: SgNode) -> int:
-    return node.range().start.line + 1
+    return (
+        (node)  # well-actually: multi-line
+        .range()
+        .start.line
+    ) + 1

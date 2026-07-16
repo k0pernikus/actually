@@ -27,10 +27,7 @@ completed = run(
     check=False,
 )
 
-root = (
-    (SgRoot(source, "python"))  # well-actually: multi-line
-    .root()
-)
+root = SgRoot(source, "python").root()
 
 posix_path = (
     (resolved)  # well-actually: multi-line
@@ -44,13 +41,7 @@ repo_root = (
     .parent.parent
 )
 
-result = (
-    (CliRunner())  # well-actually: multi-line
-    .invoke(
-        cli,
-        catch_exceptions=False,
-    )
-)
+result = CliRunner().invoke(cli, catch_exceptions=False)
 
 left = (
     a  # well-actually: multi-line
@@ -99,6 +90,8 @@ if (
 
 plain = make(1)
 single = helper(2).clean
+built = make(1).build()
+rooted = SgRoot(source, "python").root()
 
 selected = (
     (element.page)  # well-actually: multi-line

@@ -375,10 +375,7 @@ def _emit_report(
 ) -> None:
     report = render_report(output_format, findings, distribution_version("well-actually"))
     if output_file != STDOUT_SENTINEL_PATH:
-        (
-            (Path(output_file))  # well-actually: multi-line
-            .write_text(f"{report}\n", encoding="utf-8")
-        )
+        ((Path(output_file)).write_text(f"{report}\n", encoding="utf-8"))
 
         return
 

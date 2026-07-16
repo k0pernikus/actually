@@ -134,15 +134,12 @@ def test_format_help_reflects_the_config_file_selection(tmp_path: Path) -> None:
     (tmp_path / "well-actually.toml").write_text('exclude = ["ACTR"]\n', encoding="utf-8")
 
     with contextlib.chdir(tmp_path):
-        result = (
-            (CliRunner())  # well-actually: multi-line
-            .invoke(
-                main,
-                [
-                    "format",
-                    "--help",
-                ],
-            )
+        result = (CliRunner()).invoke(
+            main,
+            [
+                "format",
+                "--help",
+            ],
         )
 
     assert result.exit_code == 0
@@ -154,17 +151,14 @@ def test_format_help_reflects_the_config_file_selection(tmp_path: Path) -> None:
 @pytest.mark.integration
 def test_help_honors_selection_flags_typed_after_the_help_flag(tmp_path: Path) -> None:
     with contextlib.chdir(tmp_path):
-        result = (
-            (CliRunner())  # well-actually: multi-line
-            .invoke(
-                main,
-                [
-                    "format",
-                    "--help",
-                    "--exclude",
-                    "ACTL",
-                ],
-            )
+        result = (CliRunner()).invoke(
+            main,
+            [
+                "format",
+                "--help",
+                "--exclude",
+                "ACTL",
+            ],
         )
 
     assert result.exit_code == 0
@@ -175,15 +169,12 @@ def test_help_honors_selection_flags_typed_after_the_help_flag(tmp_path: Path) -
 @pytest.mark.integration
 def test_check_help_renders_the_selection(tmp_path: Path) -> None:
     with contextlib.chdir(tmp_path):
-        result = (
-            (CliRunner())  # well-actually: multi-line
-            .invoke(
-                main,
-                [
-                    "check",
-                    "--help",
-                ],
-            )
+        result = (CliRunner()).invoke(
+            main,
+            [
+                "check",
+                "--help",
+            ],
         )
 
     assert result.exit_code == 0

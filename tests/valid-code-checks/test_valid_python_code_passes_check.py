@@ -9,10 +9,7 @@ from actually.formatting import format_source
 
 pytestmark = pytest.mark.unit
 
-RESOLVED_TEST_FILE = (
-    (Path(__file__))  # well-actually: multi-line
-    .resolve()
-)
+RESOLVED_TEST_FILE = (Path(__file__)).resolve()
 
 CASES_DIR = RESOLVED_TEST_FILE.parent / "allowed"
 

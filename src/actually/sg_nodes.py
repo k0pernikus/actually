@@ -5,10 +5,7 @@ INDENT = "    "
 
 
 def parsed_root(source: str) -> SgNode:
-    return (
-        (SgRoot(source, "python"))  # well-actually: multi-line
-        .root()
-    )
+    return (SgRoot(source, "python")).root()
 
 
 def inside_interpolation(node: SgNode) -> bool:
@@ -32,11 +29,33 @@ def outermost(nodes: list[SgNode]) -> tuple[SgNode, ...]:
 
 
 def start_position(node: SgNode) -> tuple[int, int]:
-    return (node.range().start.line, node.range().start.column)
+    return (
+        (
+            (node)  # well-actually: multi-line
+            .range()
+            .start.line
+        ),
+        (
+            (node)  # well-actually: multi-line
+            .range()
+            .start.column
+        ),
+    )
 
 
 def end_position(node: SgNode) -> tuple[int, int]:
-    return (node.range().end.line, node.range().end.column)
+    return (
+        (
+            (node)  # well-actually: multi-line
+            .range()
+            .end.line
+        ),
+        (
+            (node)  # well-actually: multi-line
+            .range()
+            .end.column
+        ),
+    )
 
 
 def leading_whitespace(text: str) -> str:

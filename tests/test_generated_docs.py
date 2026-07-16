@@ -52,4 +52,8 @@ def test_generator_leaves_outputs_readonly() -> None:
         REPO_ROOT / "README.md",
         *sorted((REPO_ROOT / "rules").glob("*.md")),
     ]:
-        assert output.stat().st_mode & 0o222 == 0, f"{output} is writable"
+        assert (
+            (output)  # well-actually: multi-line
+            .stat()
+            .st_mode
+        ) & 0o222 == 0, f"{output} is writable"

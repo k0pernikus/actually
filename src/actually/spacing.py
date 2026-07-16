@@ -43,7 +43,15 @@ def _gap_above(statement: SgNode) -> tuple[ReturnSpacingGap, ...]:
     if preceding is None:
         return ()
 
-    if statement.range().start.line - preceding.range().end.line >= 2:
+    if (
+        (statement)  # well-actually: multi-line
+        .range()
+        .start.line
+    ) - (
+        (preceding)  # well-actually: multi-line
+        .range()
+        .end.line
+    ) >= 2:
         return ()
 
     return (_gap(statement, "above"),)
@@ -57,7 +65,15 @@ def _gap_below(statement: SgNode) -> tuple[ReturnSpacingGap, ...]:
     if following.kind() in CLAUSE_KINDS:
         return ()
 
-    if following.range().start.line - statement.range().end.line >= 2:
+    if (
+        (following)  # well-actually: multi-line
+        .range()
+        .start.line
+    ) - (
+        (statement)  # well-actually: multi-line
+        .range()
+        .end.line
+    ) >= 2:
         return ()
 
     return (_gap(statement, "below"),)
@@ -66,25 +82,53 @@ def _gap_below(statement: SgNode) -> tuple[ReturnSpacingGap, ...]:
 def _gap(statement: SgNode, side: Literal["above", "below"]) -> ReturnSpacingGap:
     return ReturnSpacingGap(
         side=side,
-        return_start_line=statement.range().start.line,
-        return_end_line=statement.range().end.line,
+        return_start_line=(
+            (statement)  # well-actually: multi-line
+            .range()
+            .start.line
+        ),
+        return_end_line=(
+            (statement)  # well-actually: multi-line
+            .range()
+            .end.line
+        ),
     )
 
 
 def _preceding_code_on_an_earlier_line(statement: SgNode) -> SgNode | None:
     current = statement.prev()
-    while current is not None and current.range().end.line == statement.range().start.line:
+    while current is not None and (
+        (current)  # well-actually: multi-line
+        .range()
+        .end.line
+    ) == (
+        (statement)  # well-actually: multi-line
+        .range()
+        .start.line
+    ):
         current = current.prev()
 
     return current
 
 
 def _following_code(statement: SgNode) -> SgNode | None:
-    end_line = statement.range().end.line
+    end_line = (
+        (statement)  # well-actually: multi-line
+        .range()
+        .end.line
+    )
     current = statement
     while True:
         sibling = current.next()
-        if sibling is not None and sibling.range().start.line == end_line:
+        if (
+            sibling is not None
+            and (
+                (sibling)  # well-actually: multi-line
+                .range()
+                .start.line
+            )
+            == end_line
+        ):
             current = sibling
             continue
 

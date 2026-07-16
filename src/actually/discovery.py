@@ -40,4 +40,11 @@ def _candidates(path: Path) -> tuple[Path, ...]:
 
 
 def _under_excluded_directory(candidate: Path, root: Path) -> bool:
-    return any(part in EXCLUDED_DIRECTORY_NAMES for part in candidate.relative_to(root).parts)
+    return any(
+        part in EXCLUDED_DIRECTORY_NAMES
+        for part in (
+            (candidate)  # well-actually: multi-line
+            .relative_to(root)
+            .parts
+        )
+    )

@@ -135,7 +135,4 @@ def _render_sarif(findings: tuple[Finding, ...], tool_version: str) -> str:
 def _fingerprint(finding: Finding) -> str:
     material = f"{finding.path}:{finding.violation.rule.code}:{finding.violation.line}:{finding.violation.message}"
 
-    return (
-        (sha256(material.encode("utf-8")))  # well-actually: multi-line
-        .hexdigest()
-    )
+    return (sha256(material.encode("utf-8"))).hexdigest()

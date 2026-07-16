@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Created:** 2026-07-14
-**Updated:** 2026-07-15
+**Updated:** 2026-07-16
 **See also:** [ADR 1](1_ruff_style_rule_codes_in_named_groups.md), [ADR 2](2_rule_docs_generated_from_rules_toml.md)
 
 ## Context
@@ -35,16 +35,20 @@
 - directive comments are namespaced by the package's full name — `# well-actually: <directive>`
   — matching the ecosystem convention (`# noqa`, `# shellcheck …`, `# ty: ignore`); the first
   directive is `multi-line`
-- ACTH001 (multi-line-chain) requires every chain of two or more invocations laid out one call
-  per line, broken at the first call, with `# well-actually: multi-line` anchoring the
-  base-receiver line — the base is the receiver of the first call, so leading receiver attributes
-  (`self.page`) fold onto it; attribute-only runs and an attribute between calls share a line with
-  the call after them, and a chain ruff would render flat when bare — one with fewer than two
-  call-valued attribute accesses, such as a call-terminated two-call chain — additionally
-  parenthesizes its base receiver so ruff keeps it fluent (`(make(1))`, `(self.page)`); chains
-  inside f-string interpolations are exempt
+- ACTH001 (multi-line-chain) requires every chain laid out one call per line, broken at the first
+  call, with `# well-actually: multi-line` anchoring the base-receiver line. A chain is two or more
+  method calls, or a method call together with a property access, counting only the steps after the
+  base receiver: `x.a().b()`, `x.a().b`, and `Path(n).resolve().parent` are chains; a lone trailing
+  call on a receiver (`make(1).build()`, `worktree_index_path(w).exists()`, `self.page.locator(x)`)
+  is a single step and stays on one line. The base is the receiver of that first step, so leading
+  receiver attributes (`self.page`) fold onto it and never count toward the threshold; attribute-only
+  runs and an attribute between calls share a line with the call after them, and a chain ruff would
+  render flat when bare — one with fewer than two call-valued attribute accesses, such as a
+  call-terminated two-call chain — additionally parenthesizes its base receiver so ruff keeps it
+  fluent (`(resolved)`, `(element.page)`); a multiline argument on a step is kept intact and
+  re-indented, and chains inside f-string interpolations are exempt
 - the fixer is the anchor's only writer: it emits the anchor when exploding a chain and strips
-  one that is stale (its chain shrank below two invocations) or mislaid (re-anchored by the next
+  one that is stale (its chain shrank below the threshold) or mislaid (re-anchored by the next
   pass), so the directive cannot rot; anchor matching is exact — any other comment text is a
   foreign comment, never touched, and a chain carrying one is reported for human layout
 - the pairing order stays actually-then-ruff: the anchored layout is a fixpoint of

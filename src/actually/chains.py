@@ -28,6 +28,8 @@ WRAP_PARENT_KINDS = frozenset(
     },
 )
 
+WRAP_DENYLIST_KINDS = frozenset()
+
 ChainGapKind = Literal["chain-not-canonical", "stale-anchor"]
 
 RewriteMode = Literal["explode-call", "inline", "wrap"]
@@ -46,7 +48,7 @@ class _Chain:
     base_end: tuple[int, int]
     base_parenthesized: bool
     segment_ends: tuple[tuple[int, int], ...]
-    call_count: int
+    attribute_count: int
     fluent_count: int
     has_method_call: bool
 
@@ -67,14 +69,25 @@ def chain_layout_gaps(source: str) -> tuple[ChainLayoutGap, ...]:
     chains = _governed_chains(root)
     governed_base_lines = {chain.base_end[0] for chain in chains}
     layout_gaps = [
-        ChainLayoutGap(kind="chain-not-canonical", line=start_position(chain.top)[0], autofixable=_is_explodable(chain, lines))
-        for chain in chains
-        if not _is_canonical(chain, lines)
+        ChainLayoutGap(kind="chain-not-canonical", line=start_position(chain.top)[0], autofixable=_is_explodable(chain)) for chain in chains if not _is_canonical(chain, lines)
     ]
     anchor_gaps = [
-        ChainLayoutGap(kind="stale-anchor", line=comment.range().start.line, autofixable=True)
+        ChainLayoutGap(
+            kind="stale-anchor",
+            line=(
+                (comment)  # well-actually: multi-line
+                .range()
+                .start.line
+            ),
+            autofixable=True,
+        )
         for comment in _anchor_comments(root)
-        if comment.range().start.line not in governed_base_lines
+        if (
+            (comment)  # well-actually: multi-line
+            .range()
+            .start.line
+        )
+        not in governed_base_lines
     ]
 
     return tuple(
@@ -91,14 +104,14 @@ def chain_layout_gaps(source: str) -> tuple[ChainLayoutGap, ...]:
 def canonicalizable_chains(source: str) -> tuple[SgNode, ...]:
     lines = source.split("\n")
 
-    return tuple(chain.top for chain in _governed_chains(parsed_root(source)) if not _is_canonical(chain, lines) and _is_explodable(chain, lines))
+    return tuple(chain.top for chain in _governed_chains(parsed_root(source)) if not _is_canonical(chain, lines) and _is_explodable(chain))
 
 
 def explode_chains(source: str, tops: tuple[SgNode, ...]) -> str:
     lines = source.split("\n")
     rewritten_spans: list[tuple[tuple[int, int], tuple[int, int]]] = []
     for top in sorted(tops, key=start_position, reverse=True):
-        plan = _rewrite_plan(top)
+        plan = _rewrite_plan(top, lines)
         span = (start_position(plan.target), end_position(plan.target))
         if any(_overlaps(span, existing) for existing in rewritten_spans):
             continue
@@ -114,7 +127,20 @@ def stale_anchor_removals(source: str) -> frozenset[int]:
     root = parsed_root(source)
     canonical_base_lines = {chain.base_end[0] for chain in _governed_chains(root) if _is_canonical(chain, lines)}
 
-    return frozenset(comment.range().start.line for comment in _anchor_comments(root) if comment.range().start.line not in canonical_base_lines)
+    return frozenset(
+        (
+            (comment)  # well-actually: multi-line
+            .range()
+            .start.line
+        )
+        for comment in _anchor_comments(root)
+        if (
+            (comment)  # well-actually: multi-line
+            .range()
+            .start.line
+        )
+        not in canonical_base_lines
+    )
 
 
 def strip_anchors(source: str, removal_lines: frozenset[int]) -> str:
@@ -127,7 +153,7 @@ def strip_anchors(source: str, removal_lines: frozenset[int]) -> str:
 def _governed_chains(root: SgNode) -> tuple[_Chain, ...]:
     chains = [_chain_of(top) for top in _maximal_spine_tops(root) if not inside_interpolation(top)]
 
-    return tuple(chain for chain in chains if chain.call_count >= 2 and chain.has_method_call)
+    return tuple(chain for chain in chains if chain.attribute_count >= 2 and chain.has_method_call)
 
 
 def _maximal_spine_tops(root: SgNode) -> tuple[SgNode, ...]:
@@ -161,15 +187,15 @@ def _chain_of(top: SgNode) -> _Chain:
     steps = tuple(reversed(step_nodes))
     base_end, segment_ends = _segment_ends(base_node, steps)
     calls = tuple(node for node in path if node.kind() == "call")
+    step_attributes = tuple(node for node in step_nodes if node.kind() == "attribute")
     base_parenthesized = base_node.kind() == "parenthesized_expression"
-    base_calls = _parenthesized_call_count(base_node) if base_parenthesized else 0
 
     return _Chain(
         top=top,
         base_end=base_end,
         base_parenthesized=base_parenthesized,
         segment_ends=segment_ends,
-        call_count=len(calls) + base_calls,
+        attribute_count=len(step_attributes),
         fluent_count=_fluent_count(path),
         has_method_call=any(_is_method_call(call) for call in calls),
     )
@@ -203,22 +229,6 @@ def _is_method_call(call: SgNode) -> bool:
     function = _spine_field_node(call)
 
     return function.kind() == "attribute"
-
-
-def _parenthesized_call_count(parenthesized: SgNode) -> int:
-    named = [child for child in parenthesized.children() if child.is_named() and child.kind() != "comment"]
-    if not named:
-        return 0
-
-    count = 0
-    current = named[0]
-    while current.kind() in SPINE_FIELD_BY_KIND:
-        if current.kind() == "call":
-            count += 1
-
-        current = _spine_field_node(current)
-
-    return count
 
 
 def _spine_path(top: SgNode) -> tuple[SgNode, ...]:
@@ -298,31 +308,23 @@ def _is_canonical(chain: _Chain, lines: list[str]) -> bool:
     return True
 
 
-def _is_explodable(chain: _Chain, lines: list[str]) -> bool:
-    if chain.top.find_all(kind="comment"):
+def _is_explodable(chain: _Chain) -> bool:
+    if _has_foreign_comment(chain.top):
         return False
 
-    if not _has_single_line_pieces(chain, lines):
-        return False
-
-    return _is_explodable_context(chain, lines)
+    return _is_explodable_context(chain)
 
 
-def _is_explodable_context(chain: _Chain, lines: list[str]) -> bool:
+def _has_foreign_comment(top: SgNode) -> bool:
+    return any(comment.text() != ANCHOR_COMMENT for comment in top.find_all(kind="comment"))
+
+
+def _is_explodable_context(chain: _Chain) -> bool:
     parent = chain.top.parent()
     if parent is None:
         return False
 
-    if parent.kind() == "parenthesized_expression":
-        return _is_statement_expression(parent)
-
-    if parent.kind() == "argument_list":
-        if _is_explodable_call_context(parent):
-            return True
-
-        return _starts_own_line(chain.top, lines)
-
-    return _is_statement_expression(chain.top)
+    return parent.kind() not in WRAP_DENYLIST_KINDS
 
 
 def _starts_own_line(node: SgNode, lines: list[str]) -> bool:
@@ -392,7 +394,35 @@ def _slice_between(lines: list[str], start: tuple[int, int], end: tuple[int, int
     ])
 
 
-def _rewrite_plan(top: SgNode) -> _RewritePlan:
+def _piece_lines(head_indent: str, piece: str, continuation_shift: str) -> list[str]:
+    first, *rest = piece.split("\n")
+
+    return [
+        f"{head_indent}{first}",
+        *[_shifted_continuation(continuation_shift, line) for line in rest],
+    ]
+
+
+def _shifted_continuation(shift: str, line: str) -> str:
+    if not line.strip():
+        return ""
+
+    return f"{shift}{line}"
+
+
+def _parenthesize(piece: str) -> str:
+    first, *rest = piece.split("\n")
+    if not rest:
+        return f"({piece})"
+
+    return "\n".join([
+        f"({first}",
+        *rest[:-1],
+        f"{rest[-1]})",
+    ])
+
+
+def _rewrite_plan(top: SgNode, lines: list[str]) -> _RewritePlan:
     parent = top.parent()
     if parent is None:
         raise ValueError("chain top without a parent cannot be rewritten")
@@ -408,7 +438,10 @@ def _rewrite_plan(top: SgNode) -> _RewritePlan:
 
             return _RewritePlan(target=call, mode="explode-call")
 
-        return _RewritePlan(target=top, mode="inline")
+        if _starts_own_line(top, lines):
+            return _RewritePlan(target=top, mode="inline")
+
+        return _RewritePlan(target=top, mode="wrap")
 
     return _RewritePlan(target=top, mode="wrap")
 
@@ -441,10 +474,12 @@ def _inline_rewrite(lines: list[str], chain: _Chain) -> list[str]:
     indent = lines[start_line][:start_column]
     suffix = lines[end_line][end_column:]
     base, *segments = _piece_slices(chain, lines)
-    anchored_base = f"({base})" if chain.needs_base_parens else base
+    anchored_base = _parenthesize(base) if chain.needs_base_parens else base
+    base_lines = _piece_lines(indent, anchored_base, "")
+    base_lines[-1] = f"{base_lines[-1]}  {ANCHOR_COMMENT}"
     body = [
-        f"{indent}{anchored_base}  {ANCHOR_COMMENT}",
-        *[f"{indent}{segment}" for segment in segments],
+        *base_lines,
+        *[line for segment in segments for line in _piece_lines(indent, segment, "")],
     ]
 
     return [
@@ -464,13 +499,15 @@ def _wrap_rewrite(lines: list[str], chain: _Chain, target: SgNode) -> list[str]:
     indent = leading_whitespace(start_text)
     body_indent = indent + INDENT
     base, *segments = _piece_slices(chain, lines)
-    anchored_base = f"({base})" if chain.needs_base_parens else base
+    anchored_base = _parenthesize(base) if chain.needs_base_parens else base
+    base_lines = _piece_lines(body_indent, anchored_base, INDENT)
+    base_lines[-1] = f"{base_lines[-1]}  {ANCHOR_COMMENT}"
 
     return [
         *lines[:start_line],
         f"{prefix}(",
-        f"{body_indent}{anchored_base}  {ANCHOR_COMMENT}",
-        *[f"{body_indent}{segment}" for segment in segments],
+        *base_lines,
+        *[line for segment in segments for line in _piece_lines(body_indent, segment, INDENT)],
         f"{indent}){suffix}",
         *lines[end_line + 1 :],
     ]
@@ -522,7 +559,7 @@ def _is_fluent_argument(argument: SgNode, lines: list[str]) -> bool:
         return False
 
     chain = _chain_of(argument)
-    if chain.call_count < 2 or not chain.has_method_call:
+    if chain.attribute_count < 2 or not chain.has_method_call:
         return False
 
     return _has_single_line_pieces(chain, lines)
