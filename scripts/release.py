@@ -1,3 +1,4 @@
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +13,8 @@ NOTHING_TO_RELEASE = frozenset({
     CZ_NO_COMMITS_FOUND,
     CZ_NO_INCREMENT,
 })
+
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
 REPO_ROOT = (
     Path(__file__)  # well-actually: multi-line
@@ -33,9 +36,13 @@ def _run(argv: list[str]) -> None:
 def _capture(argv: list[str]) -> str:
     completed = subprocess.run(argv, cwd=REPO_ROOT, text=True, capture_output=True)
     if completed.returncode != 0:
-        _fail(f"{' '.join(argv)} failed:\n{completed.stderr.strip()}")
+        _fail(f"{' '.join(argv)} failed:\n{ANSI_ESCAPE.sub('', completed.stderr).strip()}")
 
-    return completed.stdout.strip()
+    return (
+        (ANSI_ESCAPE)  # well-actually: multi-line
+        .sub("", completed.stdout)
+        .strip()
+    )
 
 
 def _assert_on_main() -> None:
