@@ -38,6 +38,7 @@ run = [
   "uv run actually check src scripts tests/*.py tests/valid-code-checks/*.py",
   "uv run ty check src tests scripts",
   "uv run python scripts/generate_docs.py --check",
+  "uv run python scripts/generate_logo.py --check",
   "uv lock --check",
 ]
 

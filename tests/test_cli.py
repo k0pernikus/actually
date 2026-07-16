@@ -1,4 +1,5 @@
 import contextlib
+from importlib.metadata import version
 from pathlib import Path
 
 import pytest
@@ -103,3 +104,15 @@ def test_check_rejects_both_autofixable_filters(tmp_path: Path) -> None:
     )
 
     assert exit_code == 2
+
+
+def test_version_flag_renders_the_banner_and_current_version() -> None:
+    result = (CliRunner()).invoke(
+        main,
+        [
+            "--version",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert version("well-actually") in result.output

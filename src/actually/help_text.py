@@ -3,7 +3,7 @@ from actually.violations import RuleCode
 
 
 CHECK_INTRO = "Report violations of the active rule selection without modifying files; exit 1 when any are found."
-FORMAT_INTRO = "Rewrite files in place with every auto-fix the active rule selection enables, then report what remains; exit 1 when unfixable violations remain."
+FORMAT_INTRO = "Rewrite files in place with every auto-fix the active rule selection enables, printing only the files it changes and reporting nothing else; exits 0."
 NO_AUTOFIX_NOTICE = "The active selection enables no auto-fixable rule: format rewrites nothing and only reports."
 FULL_FIX_HEADER = "Auto-fixed in full:"
 PARTIAL_FIX_HEADER = "Auto-fixed where safe, the rest reported:"

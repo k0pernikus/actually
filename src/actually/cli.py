@@ -16,6 +16,7 @@ from actually.config import (
 from actually.discovery import python_files
 from actually.formatting import format_source
 from actually.help_text import check_help, format_help
+from actually.logo import render_logo
 from actually.metadata import (
     FIX_LABELS,
     RuleCatalog,
@@ -67,6 +68,15 @@ click.rich_click.COMMAND_GROUPS = {
 }
 
 
+def _print_version(ctx: click.Context, _param: click.Parameter, value: bool) -> None:
+    if not value or ctx.resilient_parsing:
+        return
+
+    click.echo(render_logo(), nl=False)
+    click.echo(f"actually, version {distribution_version('well-actually')}")
+    ctx.exit()
+
+
 @click.group(
     help="Well, actually — an opinionated Python linter: no else, no elif, flat ternaries only, breathing room around return.",
     context_settings={
@@ -76,7 +86,15 @@ click.rich_click.COMMAND_GROUPS = {
         ],
     },
 )
-@click.version_option(package_name="well-actually")
+@click.option(
+    "-v",
+    "--version",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_print_version,
+    help="Show the rainbow banner and version, then exit.",
+)
 def main() -> None:
     pass
 

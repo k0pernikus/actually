@@ -16,6 +16,7 @@ def main() -> None:
 
     for output in [
         readme,
+        REPO_ROOT / "src" / "actually" / "logo.ansi",
         *sorted((REPO_ROOT / "rules").glob("*.md")),
     ]:
         output.chmod(READONLY_MODE)

@@ -58,6 +58,12 @@ hooks {
         fix = "uv run python scripts/generate_docs.py"
         stage = List("README.md", "rules")
       }
+      ["regenerate-logo"] {
+        depends = List("regenerate-docs")
+        glob = "scripts/generate_logo.py"
+        fix = "uv run python scripts/generate_logo.py"
+        stage = List("src/actually/logo.ansi")
+      }
     }
   }
   ["post-checkout"] {
