@@ -148,7 +148,12 @@ explicit default arm, the scrutinee evaluated once. Or-patterns (`case 403 | 409
 sharing a body, class patterns (`case str():`) dispatch on type, and the default arm fails
 loud — reaching for `dict.get(key, default)` instead trades the loud unknown-value failure
 for a silent wrong answer. The rule fires only on a genuinely shared scrutinee — this is the
-second pass after `no-elif` (ACTI002) has flattened a chain to guards. Chains of independent
+second pass after `no-elif` (ACTI002) has flattened a chain to guards. Dispatch means equality
+against a literal value — `==` against an int, string, or `True`/`False`/`None`, every arm
+sharing one subject. Membership (`in`), relational (`<`, `>`), identity (`is`), and inequality
+(`!=`) chains map to no bare `case` pattern — only a guarded `case _ if …`, the if-chain in
+`match` clothing — so they stay guard clauses; a non-literal right operand (a bare name becomes
+a capture pattern matching anything) is out of scope for now. Chains of independent
 predicates are guard clauses
 and STAY guard clauses — fabricating a scrutinee to force a `match`
 (`match found, description == ALL:` with positional `case True, _:` arms) is the same if-chain
@@ -536,4 +541,35 @@ def check(probe):
     y = probe.g(x)
     if not y:
         return
+'''
+
+[[rules]]
+code = "ACTS001"
+name = "no-banned-suppression"
+group = "actually-suppressions"
+status = "unstable"
+summary = "`# noqa` for a rule the project bans suppressing — remove the directive and fix the finding"
+rationale = '''
+A lint rule a project enables states a decision; a `# noqa` on that rule silences the decision at
+one line while leaving the rule enabled everywhere else, so the codebase reports compliance it does
+not have. A suppression records where a rule is still unmet — it never grants an exception to it.
+This rule fires only on the codes listed under `banned-noqa` in `well-actually.toml`, so a project
+names the rules whose suppression it refuses; every other `# noqa` is untouched, because plenty of
+them are legitimate. A bare `# noqa` names no code and therefore silences the banned ones too, so
+it fires whenever `banned-noqa` is non-empty. Ruff cannot express this: `RUF100` reports an UNUSED
+directive, never a used one suppressing a rule you forbid suppressing.
+'''
+
+[[rules.examples]]
+title = "Suppressing a banned rule"
+banned_noqa = ["TID251"]
+banned = '''
+value = os.environ["HOME"]  # noqa: TID251
+'''
+wanted = '''
+value = load(HomeSettings).home
+'''
+rationale = '''
+With `banned-noqa = ["TID251"]`, the suppression is the finding. The directive does not make the
+banned call acceptable; it records that the rule is unmet at that line.
 '''

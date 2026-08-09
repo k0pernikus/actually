@@ -72,6 +72,17 @@ BRANCH_CLAUSE_KINDS = frozenset(
     },
 )
 
+LITERAL_PATTERN_KINDS = frozenset(
+    {
+        "false",
+        "float",
+        "integer",
+        "none",
+        "string",
+        "true",
+    },
+)
+
 
 def find_violations(
     source: str,
@@ -254,7 +265,7 @@ def _condition_of(statement: SgNode) -> SgNode:
 
 
 def _shares_one_scrutinee(conditions: tuple[SgNode, ...]) -> bool:
-    if not all(condition.kind() == "comparison_operator" for condition in conditions):
+    if not all(_is_literal_equality(condition) for condition in conditions):
         return False
 
     scrutinee_texts = {_first_operand_text(condition) for condition in conditions}
@@ -262,14 +273,42 @@ def _shares_one_scrutinee(conditions: tuple[SgNode, ...]) -> bool:
     return len(scrutinee_texts) == 1
 
 
-def _first_operand_text(condition: SgNode) -> str:
+def _is_literal_equality(condition: SgNode) -> bool:
+    if condition.kind() != "comparison_operator":
+        return False
+
+    operators = tuple(child for child in condition.children() if not child.is_named())
+    if len(operators) != 1 or operators[0].kind() != "==":
+        return False
+
+    return _is_literal_pattern(_last_operand(condition))
+
+
+def _is_literal_pattern(node: SgNode) -> bool:
+    if node.kind() not in LITERAL_PATTERN_KINDS:
+        return False
+
+    return not _is_fstring(node)
+
+
+def _is_fstring(node: SgNode) -> bool:
+    return node.kind() == "string" and any(child.kind() == "interpolation" for child in node.children())
+
+
+def _named_operands(condition: SgNode) -> tuple[SgNode, ...]:
     operands = tuple(child for child in condition.children() if child.is_named())
     if not operands:
         raise ValueError("comparison_operator without operands")
 
-    first_operand = next(iter(operands))
+    return operands
 
-    return first_operand.text()
+
+def _first_operand_text(condition: SgNode) -> str:
+    return _named_operands(condition)[0].text()
+
+
+def _last_operand(condition: SgNode) -> SgNode:
+    return _named_operands(condition)[-1]
 
 
 def _chain_layout_violations(source: str) -> tuple[Violation, ...]:

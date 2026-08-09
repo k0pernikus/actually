@@ -13,7 +13,12 @@ explicit default arm, the scrutinee evaluated once. Or-patterns (`case 403 | 409
 sharing a body, class patterns (`case str():`) dispatch on type, and the default arm fails
 loud — reaching for `dict.get(key, default)` instead trades the loud unknown-value failure
 for a silent wrong answer. The rule fires only on a genuinely shared scrutinee — this is the
-second pass after `no-elif` (ACTI002) has flattened a chain to guards. Chains of independent
+second pass after `no-elif` (ACTI002) has flattened a chain to guards. Dispatch means equality
+against a literal value — `==` against an int, string, or `True`/`False`/`None`, every arm
+sharing one subject. Membership (`in`), relational (`<`, `>`), identity (`is`), and inequality
+(`!=`) chains map to no bare `case` pattern — only a guarded `case _ if …`, the if-chain in
+`match` clothing — so they stay guard clauses; a non-literal right operand (a bare name becomes
+a capture pattern matching anything) is out of scope for now. Chains of independent
 predicates are guard clauses
 and STAY guard clauses — fabricating a scrutinee to force a `match`
 (`match found, description == ALL:` with positional `case True, _:` arms) is the same if-chain

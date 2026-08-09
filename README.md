@@ -60,6 +60,12 @@ prints the same catalog in the terminal, docs links included:
 | ACTR001 | [blank-before-return](rules/blank-before-return.md) | stable | yes | a `return` stacked directly under other statements in its block |
 | ACTR002 | [blank-after-return](rules/blank-after-return.md) | stable | yes | code directly under a `return` line |
 
+## actually-suppressions
+
+| Code | Rule | Status | Auto-fix | What it enforces |
+|:---|:---|:---|:---|:---|
+| ACTS001 | [no-banned-suppression](rules/no-banned-suppression.md) | unstable | no | `# noqa` for a rule the project bans suppressing — remove the directive and fix the finding |
+
 ## actually-ternaries
 
 | Code | Rule | Status | Auto-fix | What it enforces |

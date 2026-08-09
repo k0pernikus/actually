@@ -10,6 +10,7 @@ from actually.checks import find_violations
 from actually.config import (
     LoadedSelection,
     SelectionError,
+    SuppressionPolicy,
     load_selection,
     selection_declaration,
 )
@@ -30,7 +31,8 @@ from actually.reports import (
     OutputFormat,
     render_report,
 )
-from actually.violations import RuleCode
+from actually.suppressions import banned_violations, counted
+from actually.violations import NO_BANNED_SUPPRESSION, RuleCode
 
 
 STDOUT_SENTINEL_PATH = "-"
@@ -256,9 +258,12 @@ def check(
     output_file: str,
 ) -> None:
     _reject_conflicting_filters(only_autofixable, ignore_autofixable)
-    enabled = _selection(include_entries, exclude_entries)
-    findings = _autofixable_scoped(_collect_findings(paths, enabled), only_autofixable, ignore_autofixable)
+    loaded = _loaded_selection(include_entries, exclude_entries)
+    _declare(loaded)
+    policy = _active_policy(loaded)
+    findings = _autofixable_scoped(_collect_findings(paths, loaded.enabled, policy), only_autofixable, ignore_autofixable)
     _emit_report(_output_format(output_format_value), findings, output_file)
+    _warn_suppressions(paths, policy)
     if findings:
         raise SystemExit(1)
 
@@ -276,16 +281,6 @@ def format_files(
 ) -> None:
     enabled = _loaded_selection(include_entries, exclude_entries).enabled
     _apply_fixes(paths, enabled)
-
-
-def _selection(
-    include_entries: tuple[str, ...],
-    exclude_entries: tuple[str, ...],
-) -> frozenset[RuleCode]:
-    loaded = _loaded_selection(include_entries, exclude_entries)
-    _declare(loaded)
-
-    return loaded.enabled
 
 
 def _loaded_selection(
@@ -362,17 +357,39 @@ def _autofixable_scoped(
     return findings
 
 
+def _active_policy(loaded: LoadedSelection) -> SuppressionPolicy:
+    if NO_BANNED_SUPPRESSION.code in loaded.enabled:
+        return loaded.suppressions
+
+    return SuppressionPolicy(silenced=loaded.suppressions.silenced)
+
+
 def _collect_findings(
     paths: tuple[Path, ...],
     enabled: frozenset[RuleCode],
+    policy: SuppressionPolicy,
 ) -> tuple[Finding, ...]:
-    return tuple(finding for file in python_files(paths) for finding in _file_findings(file, enabled))
+    return tuple(finding for file in python_files(paths) for finding in _file_findings(file, enabled, policy))
 
 
-def _file_findings(file: Path, enabled: frozenset[RuleCode]) -> tuple[Finding, ...]:
+def _file_findings(
+    file: Path,
+    enabled: frozenset[RuleCode],
+    policy: SuppressionPolicy,
+) -> tuple[Finding, ...]:
     source = file.read_text(encoding="utf-8")
+    violations = (
+        *find_violations(source, enabled),
+        *banned_violations(source, policy.banned),
+    )
 
-    return tuple(Finding(path=str(file), violation=violation) for violation in find_violations(source, enabled))
+    return tuple(Finding(path=str(file), violation=violation) for violation in violations)
+
+
+def _warn_suppressions(paths: tuple[Path, ...], policy: SuppressionPolicy) -> None:
+    sources = tuple(file.read_text(encoding="utf-8") for file in python_files(paths))
+    for count in counted(sources, policy.silenced):
+        click.secho(f"WARN: {count.label} suppressed {count.times} times", fg="yellow", err=True)
 
 
 def _apply_fixes(paths: tuple[Path, ...], enabled: frozenset[RuleCode]) -> None:

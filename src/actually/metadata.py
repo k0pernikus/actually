@@ -42,6 +42,7 @@ ACTIVE_RULE_KEYS = frozenset(
 EXAMPLE_KEYS = frozenset(
     {
         "banned",
+        "banned_noqa",
         "rationale",
         "title",
         "wanted",
@@ -83,6 +84,7 @@ class RuleExample:
     banned: str
     wanted: str
     rationale: str = ""
+    banned_noqa: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -215,7 +217,23 @@ def _example(item: object) -> RuleExample:
         banned=_required_string(table, "banned"),
         wanted=_required_string(table, "wanted"),
         rationale=_optional_string(table, "rationale"),
+        banned_noqa=_string_tuple(table, "banned_noqa"),
     )
+
+
+def _string_tuple(table: dict[str, object], key: str) -> tuple[str, ...]:
+    raw = table.get(key, [])
+    if not isinstance(raw, list):
+        raise TypeError(f"{key} must be an array of strings")
+
+    return tuple(_string_item(item, key) for item in raw)
+
+
+def _string_item(item: object, key: str) -> str:
+    if not isinstance(item, str):
+        raise TypeError(f"{key} must be an array of strings")
+
+    return item
 
 
 def _ruff_conflicts(entry: dict[str, object]) -> tuple[RuffConflict, ...]:

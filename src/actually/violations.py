@@ -17,6 +17,7 @@ RuleCode = Literal[
     "ACTR001",
     "ACTR002",
     "ACTO001",
+    "ACTS001",
 ]
 
 RuleName = Literal[
@@ -34,6 +35,7 @@ RuleName = Literal[
     "blank-before-return",
     "blank-after-return",
     "no-walrus",
+    "no-banned-suppression",
 ]
 
 RuleGroup = Literal[
@@ -43,6 +45,7 @@ RuleGroup = Literal[
     "actually-literals",
     "actually-operators",
     "actually-returns",
+    "actually-suppressions",
     "actually-ternaries",
 ]
 
@@ -68,6 +71,7 @@ ONE_ELEMENT_PER_LINE = Rule(code="ACTL002", name="one-element-per-line", group="
 BLANK_BEFORE_RETURN = Rule(code="ACTR001", name="blank-before-return", group="actually-returns")
 BLANK_AFTER_RETURN = Rule(code="ACTR002", name="blank-after-return", group="actually-returns")
 NO_WALRUS = Rule(code="ACTO001", name="no-walrus", group="actually-operators")
+NO_BANNED_SUPPRESSION = Rule(code="ACTS001", name="no-banned-suppression", group="actually-suppressions")
 
 RULES: tuple[Rule, ...] = (
     NO_IF_ELSE,
@@ -84,6 +88,7 @@ RULES: tuple[Rule, ...] = (
     BLANK_BEFORE_RETURN,
     BLANK_AFTER_RETURN,
     NO_WALRUS,
+    NO_BANNED_SUPPRESSION,
 )
 
 
@@ -96,6 +101,7 @@ RuleGroupPrefix = Literal[
     "ACTL",
     "ACTO",
     "ACTR",
+    "ACTS",
     "ACTT",
 ]
 
@@ -112,6 +118,7 @@ RULE_GROUP_BY_PREFIX: dict[RuleGroupPrefix, RuleGroup] = {
     "ACTL": "actually-literals",
     "ACTO": "actually-operators",
     "ACTR": "actually-returns",
+    "ACTS": "actually-suppressions",
     "ACTT": "actually-ternaries",
 }
 

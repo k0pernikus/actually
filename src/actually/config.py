@@ -16,8 +16,10 @@ from actually.violations import (
 CONFIG_FILE_NAME = "well-actually.toml"
 KNOWN_CONFIG_KEYS = frozenset(
     {
+        "banned-noqa",
         "exclude",
         "include",
+        "no-warn",
     },
 )
 
@@ -27,9 +29,23 @@ class SelectionError(ValueError):
 
 
 @dataclass(frozen=True, slots=True)
+class SuppressionPolicy:
+    banned: tuple[str, ...] = ()
+    silenced: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class LoadedSelection:
     enabled: frozenset[RuleCode]
     config_file_found: bool
+    suppressions: SuppressionPolicy = SuppressionPolicy()
+
+
+@dataclass(frozen=True, slots=True)
+class ParsedConfig:
+    include: tuple[str, ...] = ()
+    exclude: tuple[str, ...] = ()
+    suppressions: SuppressionPolicy = SuppressionPolicy()
 
 
 def load_selection(
@@ -38,13 +54,14 @@ def load_selection(
     cli_exclude: tuple[str, ...],
 ) -> LoadedSelection:
     candidate = work_dir / CONFIG_FILE_NAME
-    file_include, file_exclude = _parse_config(candidate) if candidate.is_file() else ((), ())
-    include = cli_include if cli_include else file_include
-    exclude = cli_exclude if cli_exclude else file_exclude
+    parsed = _parse_config(candidate) if candidate.is_file() else ParsedConfig()
+    include = cli_include if cli_include else parsed.include
+    exclude = cli_exclude if cli_exclude else parsed.exclude
 
     return LoadedSelection(
         enabled=resolve_selection(include, exclude),
         config_file_found=candidate.is_file(),
+        suppressions=parsed.suppressions,
     )
 
 
@@ -137,15 +154,19 @@ def _entry_match_length(code: RuleCode, entry: RuleSelector) -> int:
     return -1
 
 
-def _parse_config(path: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def _parse_config(path: Path) -> ParsedConfig:
     payload = tomllib.loads(path.read_text(encoding="utf-8"))
     unknown = set(payload) - KNOWN_CONFIG_KEYS
     if unknown:
         raise SelectionError(f"{path}: unknown keys {sorted(unknown)} — valid: {sorted(KNOWN_CONFIG_KEYS)}")
 
-    return (
-        _string_tuple(payload, "include", path),
-        _string_tuple(payload, "exclude", path),
+    return ParsedConfig(
+        include=_string_tuple(payload, "include", path),
+        exclude=_string_tuple(payload, "exclude", path),
+        suppressions=SuppressionPolicy(
+            banned=_string_tuple(payload, "banned-noqa", path),
+            silenced=_string_tuple(payload, "no-warn", path),
+        ),
     )
 
 

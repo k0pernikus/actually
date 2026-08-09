@@ -11,6 +11,8 @@ from actually.metadata import (
     RuleMetadata,
     load_rule_catalog,
 )
+from actually.suppressions import banned_violations
+from actually.violations import Violation
 
 
 REPO_ROOT = (
@@ -63,12 +65,19 @@ def _validate_snippets(rule: RuleMetadata) -> None:
         _validate_example(rule, example)
 
 
+def _triggered(source: str, banned_noqa: tuple[str, ...]) -> tuple[Violation, ...]:
+    return (
+        *find_violations(source),
+        *banned_violations(source, banned_noqa),
+    )
+
+
 def _validate_example(rule: RuleMetadata, example: RuleExample) -> None:
-    triggered = {violation.rule.code for violation in find_violations(example.banned)}
+    triggered = {violation.rule.code for violation in _triggered(example.banned, example.banned_noqa)}
     if rule.code not in triggered:
         raise ValueError(f"{rule.code} example {example.title!r}: banned does not trigger the rule (triggered: {sorted(triggered)})")
 
-    remaining = find_violations(example.wanted)
+    remaining = _triggered(example.wanted, example.banned_noqa)
     if remaining:
         details = ", ".join(f"{violation.rule.code}@{violation.line}" for violation in remaining)
         raise ValueError(f"{rule.code} example {example.title!r}: wanted is not clean ({details})")
